@@ -1,3 +1,5 @@
+#Liikumise fail, Elar Udumets, Mio Cristopher Vahtra, käivitamiseks: python mang.py
+
 import pygame 
 pygame.init() 
 
