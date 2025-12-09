@@ -3,13 +3,16 @@
 import pygame
 import sys
 
-# Alusta pygame
 pygame.init()
 
-# Ekraani suurus
-ekraan = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-laius, kõrgus = ekraan.get_size()
+# Get monitor resolution
+info = pygame.display.Info()
+laius = info.current_w
+kõrgus = info.current_h
+
+ekraan = pygame.     # NOT fullscreen
 pygame.display.set_caption("Värviline Mäng")
+
 
 # Värvid
 valge = (255, 255, 255)
