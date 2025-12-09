@@ -10,7 +10,7 @@ info = pygame.display.Info()
 laius = info.current_w
 kõrgus = info.current_h
 
-ekraan = pygame.     # NOT fullscreen
+ekraan = pygame.    # NOT fullscreen
 pygame.display.set_caption("Värviline Mäng")
 
 
