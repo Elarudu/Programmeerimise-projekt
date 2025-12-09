@@ -3,19 +3,8 @@ import pytmx
 import os
 
 pygame.init()
-
-# --- Screen Setup ---
-info = pygame.display.Info()
-screen_width = info.current_w
-screen_height = info.current_h
-
-# Set initial window size (mostly full screen, but windowed)
-WIDTH, HEIGHT = screen_width - 100, screen_height - 100 
-
-# Create the screen with the RESIZABLE flag
+WIDTH, HEIGHT = 640, 480
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-pygame.display.set_caption("Map Game")
-
 clock = pygame.time.Clock()
 
 # Track fullscreen state
@@ -88,6 +77,9 @@ print("  ESC - Quit")
 while running:
     # --- Event Handling ---
     for event in pygame.event.get():
+        if event.type == pygame.VIDEORESIZE:
+            WIDTH, HEIGHT = event.w, event.h
+            screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
         if event.type == pygame.QUIT:
             running = False
             
