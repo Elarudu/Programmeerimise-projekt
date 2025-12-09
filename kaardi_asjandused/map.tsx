@@ -5,6 +5,9 @@
   <image source="TILE1.png" width="42" height="42"/>
  </tile>
  <tile id="10">
+  <properties>
+   <property name="solid" type="bool" value="true"/>
+  </properties>
   <image source="TILE2.png" width="42" height="42"/>
  </tile>
  <tile id="11">
