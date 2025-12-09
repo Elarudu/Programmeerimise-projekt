@@ -1,5 +1,6 @@
 import pygame
 import pytmx
+import os
 
 pygame.init()
 WIDTH, HEIGHT = 640, 480
@@ -7,9 +8,15 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
 # --- Load TMX Map ---
-tmx_data = pytmx.load_pygame("level.tmx")
+script_dir = os.path.dirname(__file__)
+tmx_data = pytmx.load_pygame(os.path.join(script_dir, "level.tmx"))
 tile_width = tmx_data.tilewidth
 tile_height = tmx_data.tileheight
+
+# --- Load Player Sprites ---
+player_standing = pygame.image.load(os.path.join(script_dir, "tegelane_seisab.png")).convert_alpha()
+player_walk1 = pygame.image.load(os.path.join(script_dir, "tegelane_konnib(1).png")).convert_alpha()
+player_walk2 = pygame.image.load(os.path.join(script_dir, "tegelane_konnib(2).png")).convert_alpha()
 
 # --- Player Setup (MUST BE BEFORE GAME LOOP) ---
 player_size = 32
@@ -20,8 +27,12 @@ player_speed = 4
 # Create player rect for position and collision
 player_rect = pygame.Rect(player_x, player_y, player_size, player_size)
 
-# Player color
-player_color = (255, 100, 100)  # Red
+# Animation variables
+current_sprite = player_standing
+animation_frame = 0
+animation_speed = 10
+animation_counter = 0
+is_moving = False
 
 def draw_map(camera_x, camera_y):
     """Draw the tilemap with camera offset"""
@@ -42,20 +53,7 @@ def draw_player(camera_x, camera_y):
     """Draw the player"""
     screen_x = player_rect.x - camera_x
     screen_y = player_rect.y - camera_y
-    pygame.draw.rect(screen, player_color, (screen_x, screen_y, player_size, player_size))
-    
-    # Draw a simple face
-    eye_size = 4
-    # Eyes
-    pygame.draw.circle(screen, (255, 255, 255), 
-                      (screen_x + 10, screen_y + 10), eye_size)
-    pygame.draw.circle(screen, (255, 255, 255), 
-                      (screen_x + 22, screen_y + 10), eye_size)
-    # Pupils
-    pygame.draw.circle(screen, (0, 0, 0), 
-                      (screen_x + 10, screen_y + 10), 2)
-    pygame.draw.circle(screen, (0, 0, 0), 
-                      (screen_x + 22, screen_y + 10), 2)
+    screen.blit(current_sprite, (screen_x, screen_y))
 
 # --- Game Loop ---
 running = True
@@ -73,15 +71,37 @@ while running:
     # --- Player Movement ---
     keys = pygame.key.get_pressed()
     
+    is_moving = False
+    
     # WASD or Arrow keys
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
         player_rect.x -= player_speed
+        is_moving = True
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
         player_rect.x += player_speed
+        is_moving = True
     if keys[pygame.K_UP] or keys[pygame.K_w]:
         player_rect.y -= player_speed
+        is_moving = True
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
         player_rect.y += player_speed
+        is_moving = True
+    
+    # Update animation
+    if is_moving:
+        animation_counter += 1
+        if animation_counter >= animation_speed:
+            animation_counter = 0
+            animation_frame = (animation_frame + 1) % 2
+            
+            if animation_frame == 0:
+                current_sprite = player_walk1
+            else:
+                current_sprite = player_walk2
+    else:
+        current_sprite = player_standing
+        animation_frame = 0
+        animation_counter = 0
     
     # Keep player within map bounds
     max_x = tmx_data.width * tile_width - player_size
@@ -103,10 +123,6 @@ while running:
     draw_map(camera_x, camera_y)
     draw_player(camera_x, camera_y)
     
-    # Debug info
-    font = pygame.font.Font(None, 24)
-    pos_text = font.render(f"Position: ({player_rect.x}, {player_rect.y})", True, (255, 255, 255))
-    screen.blit(pos_text, (10, 10))
 
     pygame.display.flip()
     clock.tick(60)
