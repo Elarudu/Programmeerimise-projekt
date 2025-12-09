@@ -4,7 +4,7 @@ import os
 
 pygame.init()
 WIDTH, HEIGHT = 640, 480
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 clock = pygame.time.Clock()
 
 # --- Load TMX Map ---
@@ -62,6 +62,9 @@ print("Controls: WASD or Arrow Keys to move, ESC to quit")
 while running:
     # --- Event Handling ---
     for event in pygame.event.get():
+        if event.type == pygame.VIDEORESIZE:
+            WIDTH, HEIGHT = event.w, event.h
+            screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
