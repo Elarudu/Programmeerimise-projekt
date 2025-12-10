@@ -5,13 +5,17 @@ import os
 # --- Constants ---
 VISUAL_SIZE = 42       # Size to draw the player
 HITBOX_WIDTH = 32      # Width of collision (Slightly smaller than tile to fit in doors)
-HITBOX_HEIGHT = 42     # Full height (Head will now hit walls)
+HITBOX_HEIGHT = 42     # Full height
 PLAYER_SPEED = 4
+
+# --- Minimap Constants ---
+MINIMAP_WIDTH = 200    # Width of the minimap in pixels
+BORDER_PADDING = 10    # Space from the top-right corner
 
 pygame.init()
 WIDTH, HEIGHT = 640, 480
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-pygame.display.set_caption("Full Body Collision")
+pygame.display.set_caption("Full Body Collision + Advanced Minimap")
 clock = pygame.time.Clock()
 
 # --- Path Setup ---
@@ -19,11 +23,12 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # --- Load TMX Map ---
 try:
-    map_path = os.path.join(script_dir, "level.tmx")
+    map_path = os.path.join(script_dir, "LEVEL2.tmx")
     tmx_data = pytmx.load_pygame(map_path)
 except Exception as e:
     print(f"CRITICAL ERROR: Could not load map at {map_path}")
     print(f"Error details: {e}")
+    input("Press Enter to exit...") # Keeps window open to read error
     pygame.quit()
     exit()
 
@@ -41,7 +46,7 @@ for layer in tmx_data.visible_layers:
                 is_solid = tile_props and tile_props.get("solid")
                 
                 # 2. Hardcoded Check for Black Tile (Safety check)
-                if gid == 11:
+                if gid == 10:
                     is_solid = True
                 
                 if is_solid:
@@ -49,6 +54,40 @@ for layer in tmx_data.visible_layers:
                     walls.append(wall_rect)
 
 print(f"DEBUG: Found {len(walls)} solid walls.")
+
+# --- Advanced Minimap Setup ---
+# Calculate scale based on map size vs minimap size
+map_pixel_width = tmx_data.width * tile_width
+map_pixel_height = tmx_data.height * tile_height
+minimap_scale = MINIMAP_WIDTH / map_pixel_width
+minimap_height = int(map_pixel_height * minimap_scale)
+
+# Create the Minimap Surface
+minimap_img = pygame.Surface((MINIMAP_WIDTH, minimap_height))
+minimap_img.fill((30, 30, 30))  # Dark background (The Void)
+minimap_img.set_alpha(220)      # Slightly transparent
+
+# Draw the map content onto the minimap image
+for layer in tmx_data.visible_layers:
+    if isinstance(layer, pytmx.TiledTileLayer):
+        for x, y, gid in layer:
+            if gid:
+                # Calculate position on minimap
+                sx = x * tile_width * minimap_scale
+                sy = y * tile_height * minimap_scale
+                sw = tile_width * minimap_scale
+                sh = tile_height * minimap_scale
+                
+                # Check if it is a wall or a floor
+                tile_props = tmx_data.get_tile_properties_by_gid(gid)
+                is_solid = tile_props and tile_props.get("solid")
+                
+                if is_solid or gid == 10:
+                    # WALLS: Light Gray
+                    pygame.draw.rect(minimap_img, (180, 180, 180), (sx, sy, sw, sh))
+                else:
+                    # FLOORS: Dark Green/Brown (Adds texture to the map)
+                    pygame.draw.rect(minimap_img, (60, 80, 60), (sx, sy, sw, sh))
 
 # --- Load & Scale Images ---
 def load_image(filename):
@@ -71,18 +110,27 @@ player_standing = load_image("tegelane_seisab.png")
 player_walk1 = load_image("tegelane_konnib(1).png")
 player_walk2 = load_image("tegelane_konnib(2).png")
 
-# Fallback Red Box
+# Fallback Red Box if images fail
 if not player_standing:
     player_standing = pygame.Surface((VISUAL_SIZE, VISUAL_SIZE))
     player_standing.fill((255, 0, 0))
     player_walk1 = player_standing
     player_walk2 = player_standing
 
-# --- Player Setup ---
-player_x = WIDTH // 2 
-player_y = HEIGHT // 2
+# --- Player Setup (Spawn Point) ---
+player_x = 100 # Default
+player_y = 100 # Default
 
-# HITBOX: Now covers the full height of the character
+try:
+    spawn_object = tmx_data.get_object_by_name("SpawnPoint")
+    player_x = spawn_object.x
+    player_y = spawn_object.y
+    print(f"DEBUG: Player spawned at {player_x}, {player_y}")
+except ValueError:
+    print("WARNING: No object named 'SpawnPoint' found in map. Using defaults.")
+except Exception:
+    print("WARNING: Could not read objects from map.")
+
 player_rect = pygame.Rect(player_x, player_y, HITBOX_WIDTH, HITBOX_HEIGHT)
 
 # Animation State
@@ -111,14 +159,9 @@ def draw_player(camera_x, camera_y):
     
     # Calculate offset to center the image horizontally on the hitbox
     image_x = hitbox_screen_x - (VISUAL_SIZE - HITBOX_WIDTH) // 2
-    
-    # Vertically, they are now the same height (or close to it), so minimal offset
     image_y = hitbox_screen_y - (VISUAL_SIZE - HITBOX_HEIGHT)
     
     screen.blit(current_sprite, (image_x, image_y))
-
-    # DEBUG: Uncomment to see the full-body hitbox
-    # pygame.draw.rect(screen, (0, 255, 0), (hitbox_screen_x, hitbox_screen_y, HITBOX_WIDTH, HITBOX_HEIGHT), 1)
 
 # --- Game Loop ---
 running = True
@@ -196,9 +239,7 @@ while running:
     camera_x = player_rect.centerx - WIDTH // 2
     camera_y = player_rect.centery - HEIGHT // 2
     
-    map_pixel_width = tmx_data.width * tile_width
-    map_pixel_height = tmx_data.height * tile_height
-    
+    # Clamp camera to map bounds
     camera_x = max(0, min(camera_x, map_pixel_width - WIDTH))
     camera_y = max(0, min(camera_y, map_pixel_height - HEIGHT))
     
@@ -207,6 +248,30 @@ while running:
     draw_map(camera_x, camera_y)
     draw_player(camera_x, camera_y)
     
+    # --- Draw Advanced Minimap ---
+    
+    # 1. Background
+    minimap_x = WIDTH - MINIMAP_WIDTH - BORDER_PADDING
+    minimap_y = BORDER_PADDING
+    screen.blit(minimap_img, (minimap_x, minimap_y))
+    
+    # 2. Border
+    pygame.draw.rect(screen, (255, 255, 255), (minimap_x, minimap_y, MINIMAP_WIDTH, minimap_height), 2)
+    
+    # 3. Player Dot (Red)
+    player_mini_x = (player_rect.centerx * minimap_scale) + minimap_x
+    player_mini_y = (player_rect.centery * minimap_scale) + minimap_y
+    pygame.draw.circle(screen, (255, 50, 50), (int(player_mini_x), int(player_mini_y)), 3)
+    
+    # 4. Camera Box (View Frustum - Yellow)
+    # Shows exactly what the player sees on screen
+    camera_mini_x = (camera_x * minimap_scale) + minimap_x
+    camera_mini_y = (camera_y * minimap_scale) + minimap_y
+    camera_mini_w = WIDTH * minimap_scale
+    camera_mini_h = HEIGHT * minimap_scale
+    
+    pygame.draw.rect(screen, (255, 255, 0), (camera_mini_x, camera_mini_y, camera_mini_w, camera_mini_h), 1)
+
     pygame.display.flip()
     clock.tick(60)
 
