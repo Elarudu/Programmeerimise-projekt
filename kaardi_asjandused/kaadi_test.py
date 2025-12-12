@@ -3,10 +3,10 @@ import pytmx
 import os
 
 # --- Constants ---
-VISUAL_SIZE = 100       # Size to draw the player
-HITBOX_WIDTH = 43      # Width of collision (Slightly smaller than tile to fit in doors)
-HITBOX_HEIGHT = 87   # Full height
-PLAYER_SPEED = 8
+VISUAL_SIZE = 42       # Size to draw the player
+HITBOX_WIDTH = 32      # Width of collision (Slightly smaller than tile to fit in doors)
+HITBOX_HEIGHT = 42     # Full height
+PLAYER_SPEED = 4
 
 # --- Minimap Constants ---
 MINIMAP_WIDTH = 200    # Width of the minimap in pixels
@@ -23,7 +23,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # --- Load TMX Map ---
 try:
-    map_path = os.path.join(script_dir, "level3.tmx")
+    map_path = os.path.join(script_dir, "level.tmx")
     tmx_data = pytmx.load_pygame(map_path)
 except Exception as e:
     print(f"CRITICAL ERROR: Could not load map at {map_path}")
@@ -44,10 +44,6 @@ for layer in tmx_data.visible_layers:
                 # 1. Check Tiled Property "solid"
                 tile_props = tmx_data.get_tile_properties_by_gid(gid)
                 is_solid = tile_props and tile_props.get("solid")
-                
-                # 2. Hardcoded Check for Black Tile (Safety check)
-                if gid == 10:
-                    is_solid = True
                 
                 if is_solid:
                     wall_rect = pygame.Rect(x * tile_width, y * tile_height, tile_width, tile_height)
@@ -110,9 +106,16 @@ player_standing = load_image("tegelane_seisab.png")
 player_walk1 = load_image("tegelane_konnib(1).png")
 player_walk2 = load_image("tegelane_konnib(2).png")
 
+# Fallback Red Box if images fail
+if not player_standing:
+    player_standing = pygame.Surface((VISUAL_SIZE, VISUAL_SIZE))
+    player_standing.fill((255, 0, 0))
+    player_walk1 = player_standing
+    player_walk2 = player_standing
+
 # --- Player Setup (Spawn Point) ---
-player_x = 2140 # Default
-player_y = 4075 # Default
+player_x = 100 # Default
+player_y = 100 # Default
 
 try:
     spawn_object = tmx_data.get_object_by_name("SpawnPoint")
@@ -128,7 +131,7 @@ player_rect = pygame.Rect(player_x, player_y, HITBOX_WIDTH, HITBOX_HEIGHT)
 
 # Animation State
 current_sprite = player_standing
-animation_frame = 15
+animation_frame = 0
 animation_speed = 10
 animation_counter = 0
 

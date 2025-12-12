@@ -17,6 +17,9 @@
   <image source="TILE4.png" width="42" height="42"/>
  </tile>
  <tile id="13">
+  <properties>
+   <property name="opsüs_küs" type="bool" value="true"/>
+  </properties>
   <image source="OPSÜS.png" width="42" height="42"/>
  </tile>
  <tile id="14">
