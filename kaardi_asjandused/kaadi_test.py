@@ -3,10 +3,10 @@ import pytmx
 import os
 
 # --- Constants ---
-VISUAL_SIZE = 42       # Size to draw the player
-HITBOX_WIDTH = 32      # Width of collision (Slightly smaller than tile to fit in doors)
-HITBOX_HEIGHT = 42     # Full height
-PLAYER_SPEED = 4
+VISUAL_SIZE = 100       # Size to draw the player
+HITBOX_WIDTH = 43      # Width of collision (Slightly smaller than tile to fit in doors)
+HITBOX_HEIGHT = 87   # Full height
+PLAYER_SPEED = 8
 
 # --- Minimap Constants ---
 MINIMAP_WIDTH = 200    # Width of the minimap in pixels
@@ -110,13 +110,6 @@ player_standing = load_image("tegelane_seisab.png")
 player_walk1 = load_image("tegelane_konnib(1).png")
 player_walk2 = load_image("tegelane_konnib(2).png")
 
-# Fallback Red Box if images fail
-if not player_standing:
-    player_standing = pygame.Surface((VISUAL_SIZE, VISUAL_SIZE))
-    player_standing.fill((255, 0, 0))
-    player_walk1 = player_standing
-    player_walk2 = player_standing
-
 # --- Player Setup (Spawn Point) ---
 player_x = 100 # Default
 player_y = 100 # Default
@@ -135,7 +128,7 @@ player_rect = pygame.Rect(player_x, player_y, HITBOX_WIDTH, HITBOX_HEIGHT)
 
 # Animation State
 current_sprite = player_standing
-animation_frame = 0
+animation_frame = 15
 animation_speed = 10
 animation_counter = 0
 
