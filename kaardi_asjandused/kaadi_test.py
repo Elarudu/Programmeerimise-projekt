@@ -23,7 +23,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # --- Load TMX Map ---
 try:
-    map_path = os.path.join(script_dir, "LEVEL2.tmx")
+    map_path = os.path.join(script_dir, "level3.tmx")
     tmx_data = pytmx.load_pygame(map_path)
 except Exception as e:
     print(f"CRITICAL ERROR: Could not load map at {map_path}")
