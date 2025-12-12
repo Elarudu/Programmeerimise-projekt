@@ -5,7 +5,7 @@ import os
 # --- Constants ---
 VISUAL_SIZE = 100       # Size to draw the player
 HITBOX_WIDTH = 43      # Width of collision (Slightly smaller than tile to fit in doors)
-HITBOX_HEIGHT = 87   # Full height
+HITBOX_HEIGHT = 74   # Full height
 PLAYER_SPEED = 8
 
 # --- Minimap Constants ---
@@ -152,7 +152,7 @@ def draw_player(camera_x, camera_y):
     
     # Calculate offset to center the image horizontally on the hitbox
     image_x = hitbox_screen_x - (VISUAL_SIZE - HITBOX_WIDTH) // 2
-    image_y = hitbox_screen_y - (VISUAL_SIZE - HITBOX_HEIGHT)
+    image_y = hitbox_screen_y - (VISUAL_SIZE - HITBOX_HEIGHT - 13)
     
     screen.blit(current_sprite, (image_x, image_y))
 
