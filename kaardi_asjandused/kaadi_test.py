@@ -111,8 +111,8 @@ player_walk1 = load_image("tegelane_konnib(1).png")
 player_walk2 = load_image("tegelane_konnib(2).png")
 
 # --- Player Setup (Spawn Point) ---
-player_x = 100 # Default
-player_y = 100 # Default
+player_x = 2000 # Default
+player_y = 4000 # Default
 
 try:
     spawn_object = tmx_data.get_object_by_name("SpawnPoint")
