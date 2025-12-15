@@ -4,45 +4,59 @@ import os
 
 # --- Constants ---
 VISUAL_SIZE = 100       # Size to draw the player
-HITBOX_WIDTH = 43       # Width of collision (Slightly smaller than tile to fit in doors)
+HITBOX_WIDTH = 43       # Width of collision
 HITBOX_HEIGHT = 74      # Full height
 PLAYER_SPEED = 8
 
 # --- Minimap Constants ---
-MINIMAP_WIDTH = 200     # Width of the minimap in pixels
-BORDER_PADDING = 10     # Space from the top-right corner
+MINIMAP_WIDTH = 200     
+BORDER_PADDING = 10     
 
-# --- Hearts (3 hearts above player) ---
+# --- Hearts ---
 HEARTS_MAX = 3
 HEART_ICON_SIZE = (22, 20)
 HEART_PADDING = 6
 HEART_SPACING = 6
-HEART_OFFSET_Y = 12     # pixels above the player's hitbox top
+HEART_OFFSET_Y = 12     
 
-#Mündid
-Mündid = 0
+# --- Quiz Configuration ---
+GAME_STATE = "walking" # Options: "walking", "quiz", "success"
+current_quiz = None    # Holds active quiz data
+user_text = ""         # Stores player typing
+collected_numbers = [] # Stores rewards
+completed_quizzes = [] # Tracks finished quizzes to prevent re-triggering
 
-def lae_mündi_pilt(script_dir, size=(16, 16)):
-    candidates = [
-        os.path.join(script_dir, "münt.png"),
-    ]
+# QUIZ DATABASE
+# keys must match the 'quiz_id' property in Tiled
+QUIZ_DATA = {
+    "math_1": {
+        "question": "What is 5 * 5 + 2?",
+        "answer": "27",
+        "reward": "4"
+    },
+    "prog_1": {
+        "question": "Python function keyword?",
+        "answer": "def",
+        "reward": "9"
+    },
+    "arch_1": {
+        "question": "What does CPU stand for?",
+        "answer": "central processing unit",
+        "reward": "1"
+    }
+}
 
-    path = next((p for p in candidates if os.path.exists(p)), None)
-
-    münt_img = pygame.image.load(path).convert_alpha()
-    if size is not None:
-        münt_img = pygame.transform.scale(münt_img, size)
-
-    return münt_img
-
-
+# --- Functions ---
 
 def load_heart_images(script_dir, size=(22, 20)):
-    candidates = [
-        os.path.join(script_dir, "süda.png"),
-    ]
-
+    candidates = [os.path.join(script_dir, "süda.png")]
     path = next((p for p in candidates if os.path.exists(p)), None)
+    
+    if not path:
+        # Fallback if image missing: create red square
+        surf = pygame.Surface(size)
+        surf.fill((255, 0, 0))
+        return surf, surf
 
     heart_full = pygame.image.load(path).convert_alpha()
     if size is not None:
@@ -52,106 +66,96 @@ def load_heart_images(script_dir, size=(22, 20)):
     heart_empty.fill((90, 90, 90, 255), special_flags=pygame.BLEND_RGBA_MULT)
     return heart_full, heart_empty
 
-
-def draw_hearts_above_player(
-    screen,
-    player_rect,
-    camera_x, camera_y,
-    hearts, hearts_max,
-    heart_full, heart_empty,
-    padding=6, spacing=6,
-    offset_y=12
-):
+def draw_hearts_above_player(screen, player_rect, camera_x, camera_y, hearts, hearts_max, heart_full, heart_empty, padding=6, spacing=6, offset_y=12):
     hearts = max(0, min(hearts_max, int(hearts)))
-
-    # Player position in screen-space
     cx = player_rect.centerx - camera_x
     top = player_rect.top - camera_y
-
     hw, hh = heart_full.get_width(), heart_full.get_height()
     box_w = padding * 2 + hearts_max * hw + (hearts_max - 1) * spacing
     box_h = padding * 2 + hh
-
     box_x = int(cx - box_w // 2)
     box_y = int(top - box_h - offset_y)
-
-    # Clamp so it's always visible
+    
+    # Clamp to screen
     box_x = max(0, min(box_x, screen.get_width() - box_w))
     box_y = max(0, min(box_y, screen.get_height() - box_h))
 
-    box = pygame.Rect(box_x, box_y, box_w, box_h)
-
-    x = box.x + padding
-    y = box.y + padding
     for i in range(hearts_max):
         img = heart_full if i < hearts else heart_empty
-        screen.blit(img, (x, y))
-        x += hw + spacing
+        screen.blit(img, (box_x + padding + i*(hw+spacing), box_y + padding))
 
+def load_image(filename):
+    paths_to_check = [os.path.join(script_dir, "pildid", filename), os.path.join(script_dir, filename)]
+    for path in paths_to_check:
+        if os.path.exists(path):
+            try:
+                img = pygame.image.load(path).convert_alpha()
+                return pygame.transform.scale(img, (VISUAL_SIZE, VISUAL_SIZE))
+            except Exception: pass
+    return pygame.Surface((VISUAL_SIZE, VISUAL_SIZE)) # Return blank surface if missing
+
+# --- Init ---
 pygame.init()
 WIDTH, HEIGHT = 640, 480
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-pygame.display.set_caption("Full Body Collision + Advanced Minimap")
+pygame.display.set_caption("RPG Quiz Game")
 clock = pygame.time.Clock()
+font = pygame.font.Font(None, 36) # Default font for quiz
 
-# --- Path Setup ---
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-# --- Load Heart Images (süda.png) ---
+# --- Load Assets ---
 player_hearts = HEARTS_MAX
-try:
-    heart_full, heart_empty = load_heart_images(script_dir, size=HEART_ICON_SIZE)
-except Exception as e:
-    print("CRITICAL ERROR: Could not load heart image(s).")
-    print("Error details:", e)
-    input("Press Enter to exit...")
-    pygame.quit()
-    raise
+heart_full, heart_empty = load_heart_images(script_dir, size=HEART_ICON_SIZE)
 
 # --- Load TMX Map ---
 try:
     map_path = os.path.join(script_dir, "level.tmx")
     tmx_data = pytmx.load_pygame(map_path)
 except Exception as e:
-    print(f"CRITICAL ERROR: Could not load map at {map_path}")
-    print(f"Error details: {e}")
-    input("Press Enter to exit...")  # Keeps window open to read error
-    pygame.quit()
-    exit()
+    print(f"CRITICAL ERROR: Could not load map at {map_path}\n{e}")
+    pygame.quit(); exit()
 
 tile_width = tmx_data.tilewidth
 tile_height = tmx_data.tileheight
 
-# --- Build Wall List ---
+# --- Build Wall & Quiz Lists ---
 walls = []
+quiz_triggers = []
+
 for layer in tmx_data.visible_layers:
     if isinstance(layer, pytmx.TiledTileLayer):
         for x, y, gid in layer:
             if gid:
-                # 1. Check Tiled Property "solid"
                 tile_props = tmx_data.get_tile_properties_by_gid(gid)
+                
+                # Check for Solid Wall
                 is_solid = tile_props and tile_props.get("solid")
-
-                # 2. Hardcoded Check for Black Tile (Safety check)
-                if gid == 10:
-                    is_solid = True
-
+                if gid == 10: is_solid = True 
+                
                 if is_solid:
-                    wall_rect = pygame.Rect(x * tile_width, y * tile_height, tile_width, tile_height)
-                    walls.append(wall_rect)
+                    rect = pygame.Rect(x * tile_width, y * tile_height, tile_width, tile_height)
+                    walls.append(rect)
 
-print(f"DEBUG: Found {len(walls)} solid walls.")
+                # Check for Quiz Trigger (Property: 'quiz_id')
+                if tile_props:
+                    quiz_id = tile_props.get("quiz_id")
+                    if quiz_id:
+                        rect = pygame.Rect(x * tile_width, y * tile_height, tile_width, tile_height)
+                        quiz_triggers.append((rect, quiz_id))
 
-# --- Advanced Minimap Setup ---
+print(f"DEBUG: Found {len(walls)} solid walls and {len(quiz_triggers)} quiz triggers.")
+
+# --- Minimap Setup ---
 map_pixel_width = tmx_data.width * tile_width
 map_pixel_height = tmx_data.height * tile_height
 minimap_scale = MINIMAP_WIDTH / map_pixel_width
 minimap_height = int(map_pixel_height * minimap_scale)
-
 minimap_img = pygame.Surface((MINIMAP_WIDTH, minimap_height))
 minimap_img.fill((30, 30, 30))
 minimap_img.set_alpha(220)
 
+# Draw static map to minimap surface
 for layer in tmx_data.visible_layers:
     if isinstance(layer, pytmx.TiledTileLayer):
         for x, y, gid in layer:
@@ -160,60 +164,28 @@ for layer in tmx_data.visible_layers:
                 sy = y * tile_height * minimap_scale
                 sw = tile_width * minimap_scale
                 sh = tile_height * minimap_scale
-
                 tile_props = tmx_data.get_tile_properties_by_gid(gid)
-                is_solid = tile_props and tile_props.get("solid")
+                color = (180, 180, 180) if (tile_props and tile_props.get("solid")) else (60, 80, 60)
+                if tile_props and tile_props.get("quiz_id"): color = (0, 0, 200) # Blue for quiz
+                pygame.draw.rect(minimap_img, color, (sx, sy, sw, sh))
 
-                if is_solid or gid == 10:
-                    pygame.draw.rect(minimap_img, (180, 180, 180), (sx, sy, sw, sh))
-                else:
-                    pygame.draw.rect(minimap_img, (60, 80, 60), (sx, sy, sw, sh))
-
-# --- Load & Scale Images ---
-def load_image(filename):
-    paths_to_check = [
-        os.path.join(script_dir, "pildid", filename),
-        os.path.join(script_dir, filename)
-    ]
-
-    for path in paths_to_check:
-        if os.path.exists(path):
-            try:
-                img = pygame.image.load(path).convert_alpha()
-                return pygame.transform.scale(img, (VISUAL_SIZE, VISUAL_SIZE))
-            except Exception as e:
-                print(f"Error loading {filename}: {e}")
-                return None
-    return None
-
+# --- Player Setup ---
 player_standing = load_image("tegelane_seisab.png")
 player_walk1 = load_image("tegelane_konnib(1).png")
 player_walk2 = load_image("tegelane_konnib(2).png")
 
-# --- Player Setup (Spawn Point) ---
-player_x = 300
-player_y = 1200
-
+player_x, player_y = 300, 1200
 try:
     spawn_object = tmx_data.get_object_by_name("SpawnPoint")
-    player_x = spawn_object.x
-    player_y = spawn_object.y
-    print(f"DEBUG: Player spawned at {player_x}, {player_y}")
-except ValueError:
-    print("WARNING: No object named 'SpawnPoint' found in map. Using defaults.")
-except Exception:
-    print("WARNING: Could not read objects from map.")
+    player_x, player_y = spawn_object.x, spawn_object.y
+except Exception: pass
 
 player_rect = pygame.Rect(player_x, player_y, HITBOX_WIDTH, HITBOX_HEIGHT)
-
-# Animation State
 current_sprite = player_standing
 animation_frame = 0
-animation_speed = 10
-animation_counter = 10
+animation_counter = 0
 
-def draw_map(camera_x, camera_y):
-    """Draw the map tiles"""
+def draw_map_layer(camera_x, camera_y):
     for layer in tmx_data.visible_layers:
         if isinstance(layer, pytmx.TiledTileLayer):
             for x, y, gid in layer:
@@ -221,138 +193,166 @@ def draw_map(camera_x, camera_y):
                 if tile:
                     screen_x = x * tile_width - camera_x
                     screen_y = y * tile_height - camera_y
-
                     if -tile_width < screen_x < WIDTH and -tile_height < screen_y < HEIGHT:
                         screen.blit(tile, (screen_x, screen_y))
 
-def draw_player(camera_x, camera_y):
-    """Draw the player image aligned with the hitbox"""
-    hitbox_screen_x = player_rect.x - camera_x
-    hitbox_screen_y = player_rect.y - camera_y
-
-    image_x = hitbox_screen_x - (VISUAL_SIZE - HITBOX_WIDTH) // 2
-    image_y = hitbox_screen_y - (VISUAL_SIZE - HITBOX_HEIGHT - 13)
-
-    screen.blit(current_sprite, (image_x, image_y))
-
-# --- Game Loop ---
+# --- Main Game Loop ---
 running = True
-print("Controls: WASD to move, F for Fullscreen, ESC to quit")
-print("Heart test: H = damage, J = heal")
+print("Controls: WASD to move. Type answer when quiz pops up.")
 
 while running:
+    # 1. Event Handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.VIDEORESIZE:
             WIDTH, HEIGHT = event.w, event.h
             screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                running = False
-            elif event.key == pygame.K_f:
-                is_fullscreen = screen.get_flags() & pygame.FULLSCREEN
-                if is_fullscreen:
-                    screen = pygame.display.set_mode((640, 480), pygame.RESIZABLE)
+        
+        # --- QUIZ & SUCCESS INPUT ---
+        elif GAME_STATE == "quiz":
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKSPACE:
+                    user_text = user_text[:-1]
+                elif event.key == pygame.K_RETURN:
+                    if user_text.lower() == current_quiz["answer"].lower():
+                        GAME_STATE = "success"
+                    else:
+                        user_text = "" # Wrong answer
+                elif event.key == pygame.K_ESCAPE:
+                    GAME_STATE = "walking"
                 else:
-                    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-                WIDTH, HEIGHT = screen.get_size()
+                    user_text += event.unicode
 
-            # --- Test hearts ---
-            elif event.key == pygame.K_h:
-                player_hearts = max(0, player_hearts - 1)
-            elif event.key == pygame.K_j:
-                player_hearts = min(HEARTS_MAX, player_hearts + 1)
+        elif GAME_STATE == "success":
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                if current_quiz["reward"] not in collected_numbers:
+                    collected_numbers.append(current_quiz["reward"])
+                completed_quizzes.append(current_quiz["id"])
+                GAME_STATE = "walking"
 
-    # --- Movement & Collision ---
-    keys = pygame.key.get_pressed()
-    is_moving = False
+        # --- WALKING INPUT ---
+        elif GAME_STATE == "walking":
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE: running = False
+                elif event.key == pygame.K_f:
+                    if screen.get_flags() & pygame.FULLSCREEN:
+                        screen = pygame.display.set_mode((640, 480), pygame.RESIZABLE)
+                    else:
+                        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                    WIDTH, HEIGHT = screen.get_size()
+                elif event.key == pygame.K_h: player_hearts = max(0, player_hearts - 1)
+                elif event.key == pygame.K_j: player_hearts = min(HEARTS_MAX, player_hearts + 1)
 
-    # Move X
-    move_x = 0
-    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        move_x = -PLAYER_SPEED
-        is_moving = True
-    elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        move_x = PLAYER_SPEED
-        is_moving = True
+    # 2. Game Logic
+    if GAME_STATE == "walking":
+        keys = pygame.key.get_pressed()
+        is_moving = False
+        move_x, move_y = 0, 0
 
-    player_rect.x += move_x
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]: move_x = -PLAYER_SPEED; is_moving = True
+        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]: move_x = PLAYER_SPEED; is_moving = True
+        
+        player_rect.x += move_x
+        for wall in walls:
+            if player_rect.colliderect(wall):
+                if move_x > 0: player_rect.right = wall.left
+                elif move_x < 0: player_rect.left = wall.right
 
-    for wall in walls:
-        if player_rect.colliderect(wall):
-            if move_x > 0:
-                player_rect.right = wall.left
-            elif move_x < 0:
-                player_rect.left = wall.right
+        if keys[pygame.K_UP] or keys[pygame.K_w]: move_y = -PLAYER_SPEED; is_moving = True
+        elif keys[pygame.K_DOWN] or keys[pygame.K_s]: move_y = PLAYER_SPEED; is_moving = True
 
-    # Move Y
-    move_y = 0
-    if keys[pygame.K_UP] or keys[pygame.K_w]:
-        move_y = -PLAYER_SPEED
-        is_moving = True
-    elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        move_y = PLAYER_SPEED
-        is_moving = True
+        player_rect.y += move_y
+        for wall in walls:
+            if player_rect.colliderect(wall):
+                if move_y > 0: player_rect.bottom = wall.top
+                elif move_y < 0: player_rect.top = wall.bottom
 
-    player_rect.y += move_y
+        # Check for Quiz Trigger
+        for rect, q_id in quiz_triggers:
+            if player_rect.colliderect(rect):
+                if q_id in QUIZ_DATA and q_id not in completed_quizzes:
+                    GAME_STATE = "quiz"
+                    current_quiz = QUIZ_DATA[q_id]
+                    current_quiz["id"] = q_id
+                    user_text = ""
+                    # Push back slightly to avoid re-trigger loop immediately
+                    if move_y < 0: player_rect.y += 10
+                    elif move_y > 0: player_rect.y -= 10
+                    elif move_x < 0: player_rect.x += 10
+                    elif move_x > 0: player_rect.x -= 10
 
-    for wall in walls:
-        if player_rect.colliderect(wall):
-            if move_y > 0:
-                player_rect.bottom = wall.top
-            elif move_y < 0:
-                player_rect.top = wall.bottom
+        # Animation
+        if is_moving:
+            animation_counter += 1
+            if animation_counter >= 10:
+                animation_counter = 0
+                animation_frame = (animation_frame + 1) % 2
+                current_sprite = player_walk1 if animation_frame == 0 else player_walk2
+        else:
+            current_sprite = player_standing
 
-    # --- Animation ---
-    if is_moving:
-        animation_counter += 1
-        if animation_counter >= animation_speed:
-            animation_counter = 0
-            animation_frame = (animation_frame + 1) % 2
-            current_sprite = player_walk1 if animation_frame == 0 else player_walk2
-    else:
-        current_sprite = player_standing
+    # 3. Drawing
+    camera_x = max(0, min(player_rect.centerx - WIDTH // 2, map_pixel_width - WIDTH))
+    camera_y = max(0, min(player_rect.centery - HEIGHT // 2, map_pixel_height - HEIGHT))
 
-    # --- Camera ---
-    camera_x = player_rect.centerx - WIDTH // 2
-    camera_y = player_rect.centery - HEIGHT // 2
-
-    camera_x = max(0, min(camera_x, map_pixel_width - WIDTH))
-    camera_y = max(0, min(camera_y, map_pixel_height - HEIGHT))
-
-    # --- Draw ---
     screen.fill((30, 30, 30))
-    draw_map(camera_x, camera_y)
-    draw_player(camera_x, camera_y)
+    draw_map_layer(camera_x, camera_y)
+    
+    # Draw Player
+    hitbox_screen_x = player_rect.x - camera_x
+    hitbox_screen_y = player_rect.y - camera_y
+    image_x = hitbox_screen_x - (VISUAL_SIZE - HITBOX_WIDTH) // 2
+    image_y = hitbox_screen_y - (VISUAL_SIZE - HITBOX_HEIGHT - 13)
+    screen.blit(current_sprite, (image_x, image_y))
 
-    # --- Draw hearts above player's head ---
-    draw_hearts_above_player(
-        screen, player_rect, camera_x, camera_y,
-        player_hearts, HEARTS_MAX,
-        heart_full, heart_empty,
-        padding=HEART_PADDING,
-        spacing=HEART_SPACING,
-        offset_y=HEART_OFFSET_Y
-    )
+    draw_hearts_above_player(screen, player_rect, camera_x, camera_y, player_hearts, HEARTS_MAX, heart_full, heart_empty)
 
-    # --- Draw Advanced Minimap ---
+    # Draw Minimap
     minimap_x = WIDTH - MINIMAP_WIDTH - BORDER_PADDING
     minimap_y = BORDER_PADDING
     screen.blit(minimap_img, (minimap_x, minimap_y))
-
     pygame.draw.rect(screen, (255, 255, 255), (minimap_x, minimap_y, MINIMAP_WIDTH, minimap_height), 2)
-
+    
+    # Player dot on minimap
     player_mini_x = (player_rect.centerx * minimap_scale) + minimap_x
     player_mini_y = (player_rect.centery * minimap_scale) + minimap_y
     pygame.draw.circle(screen, (255, 50, 50), (int(player_mini_x), int(player_mini_y)), 3)
 
-    camera_mini_x = (camera_x * minimap_scale) + minimap_x
-    camera_mini_y = (camera_y * minimap_scale) + minimap_y
-    camera_mini_w = WIDTH * minimap_scale
-    camera_mini_h = HEIGHT * minimap_scale
+    # Draw UI Overlays (Quiz)
+    if GAME_STATE == "quiz" or GAME_STATE == "success":
+        # Dim background
+        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))
+        screen.blit(overlay, (0, 0))
 
-    pygame.draw.rect(screen, (255, 255, 0), (camera_mini_x, camera_mini_y, camera_mini_w, camera_mini_h), 1)
+        # Box Dimensions
+        box_w, box_h = 400, 250
+        box_x = (WIDTH - box_w) // 2
+        box_y = (HEIGHT - box_h) // 2
+        
+        pygame.draw.rect(screen, (50, 50, 60), (box_x, box_y, box_w, box_h))
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_w, box_h), 3)
+
+        if GAME_STATE == "quiz":
+            q_surf = font.render(current_quiz["question"], True, (255, 255, 255))
+            screen.blit(q_surf, (box_x + 20, box_y + 40))
+            
+            ans_surf = font.render(f"Answer: {user_text}_", True, (100, 255, 100))
+            screen.blit(ans_surf, (box_x + 20, box_y + 120))
+            
+            hint_surf = font.render("Type answer & press ENTER", True, (180, 180, 180))
+            screen.blit(hint_surf, (box_x + 20, box_y + 200))
+
+        elif GAME_STATE == "success":
+            win_surf = font.render("CORRECT!", True, (0, 255, 0))
+            screen.blit(win_surf, (box_x + 130, box_y + 40))
+            
+            code_surf = font.render(f"Secret Number: {current_quiz['reward']}", True, (255, 215, 0))
+            screen.blit(code_surf, (box_x + 50, box_y + 120))
+            
+            cont_surf = font.render("Press ENTER to continue", True, (200, 200, 200))
+            screen.blit(cont_surf, (box_x + 50, box_y + 200))
 
     pygame.display.flip()
     clock.tick(60)

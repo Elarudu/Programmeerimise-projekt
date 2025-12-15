@@ -18,7 +18,7 @@
  </tile>
  <tile id="13">
   <properties>
-   <property name="opsüs_küs" type="bool" value="true"/>
+   <property name="quiz_id" value="opsys_1"/>
   </properties>
   <image source="OPSÜS.png" width="42" height="42"/>
  </tile>
@@ -29,6 +29,9 @@
   <image source="SISSEJ..png" width="42" height="42"/>
  </tile>
  <tile id="16">
+  <properties>
+   <property name="quiz_id" value="math_1"/>
+  </properties>
   <image source="KÕM.png" width="42" height="42"/>
  </tile>
 </tileset>
