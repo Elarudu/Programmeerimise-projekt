@@ -181,8 +181,8 @@ if not player_standing:
     player_walk2 = player_standing
 
 # --- Player Setup (Spawn Point) ---
-player_x = 2140
-player_y = 4085
+player_x = 300
+player_y = 1200
 
 try:
     spawn_object = tmx_data.get_object_by_name("SpawnPoint")
