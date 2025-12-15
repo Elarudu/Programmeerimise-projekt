@@ -19,6 +19,23 @@ HEART_PADDING = 6
 HEART_SPACING = 6
 HEART_OFFSET_Y = 12     # pixels above the player's hitbox top
 
+#Mündid
+Mündid = 0
+
+def lae_mündi_pilt(script_dir, size=(16, 16)):
+    candidates = [
+        os.path.join(script_dir, "münt.png"),
+    ]
+
+    path = next((p for p in candidates if os.path.exists(p)), None)
+
+    münt_img = pygame.image.load(path).convert_alpha()
+    if size is not None:
+        münt_img = pygame.transform.scale(münt_img, size)
+
+    return münt_img
+
+
 
 def load_heart_images(script_dir, size=(22, 20)):
     candidates = [
@@ -173,13 +190,6 @@ player_standing = load_image("tegelane_seisab.png")
 player_walk1 = load_image("tegelane_konnib(1).png")
 player_walk2 = load_image("tegelane_konnib(2).png")
 
-# Fallback Red Box if images fail
-if not player_standing:
-    player_standing = pygame.Surface((VISUAL_SIZE, VISUAL_SIZE))
-    player_standing.fill((255, 0, 0))
-    player_walk1 = player_standing
-    player_walk2 = player_standing
-
 # --- Player Setup (Spawn Point) ---
 player_x = 300
 player_y = 1200
@@ -200,7 +210,7 @@ player_rect = pygame.Rect(player_x, player_y, HITBOX_WIDTH, HITBOX_HEIGHT)
 current_sprite = player_standing
 animation_frame = 0
 animation_speed = 10
-animation_counter = 0
+animation_counter = 10
 
 def draw_map(camera_x, camera_y):
     """Draw the map tiles"""
