@@ -32,14 +32,14 @@ QUIZ_DATA = {
 
 # --- Functions ---
 def load_image(filename):
-    paths_to_check = [os.path.join(script_dir, "pildid", filename), os.path.join(script_dir, filename)]
-    for path in paths_to_check:
-        if os.path.exists(path):
-            try:
-                img = pygame.image.load(path).convert_alpha()
-                return pygame.transform.scale(img, (VISUAL_SIZE, VISUAL_SIZE))
-            except Exception: pass
-    return pygame.Surface((VISUAL_SIZE, VISUAL_SIZE)) # Return blank surface if missing
+    path = os.path.join(script_dir, filename)
+    if os.path.exists(path):
+        try:
+            img = pygame.image.load(path).convert_alpha()
+            return pygame.transform.scale(img, (VISUAL_SIZE, VISUAL_SIZE))
+        except Exception:
+            pass
+    return pygame.Surface((VISUAL_SIZE, VISUAL_SIZE), pygame.SRCALPHA)
 def draw_map_layer(camera_x, camera_y):
     for layer in tmx_data.visible_layers:
         if isinstance(layer, pytmx.TiledTileLayer):
@@ -225,10 +225,6 @@ while running:
 
     # Draw UI Overlays (Quiz)
     if GAME_STATE == "quiz" or GAME_STATE == "success":
-        # Dim background
-        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 150))
-        screen.blit(overlay, (0, 0))
 
         # Box Dimensions
         box_w, box_h = 400, 250
