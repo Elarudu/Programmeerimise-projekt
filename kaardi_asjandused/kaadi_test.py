@@ -8,17 +8,6 @@ HITBOX_WIDTH = 43       # Width of collision
 HITBOX_HEIGHT = 74      # Full height
 PLAYER_SPEED = 8
 
-# --- Minimap Constants ---
-MINIMAP_WIDTH = 200     
-BORDER_PADDING = 10     
-
-# --- Hearts ---
-HEARTS_MAX = 3
-HEART_ICON_SIZE = (22, 20)
-HEART_PADDING = 6
-HEART_SPACING = 6
-HEART_OFFSET_Y = 12     
-
 # --- Quiz Configuration ---
 GAME_STATE = "walking" # Options: "walking", "quiz", "success"
 current_quiz = None    # Holds active quiz data
@@ -35,8 +24,8 @@ QUIZ_DATA = {
         "reward": "4"
     },
     "prog_1": {
-        "question": "Python function keyword?",
-        "answer": "def",
+        "question": "Goat vana?",
+        "answer": "jaan janno", 
         "reward": "9"
     },
     "arch_1": {
@@ -47,42 +36,6 @@ QUIZ_DATA = {
 }
 
 # --- Functions ---
-
-def load_heart_images(script_dir, size=(22, 20)):
-    candidates = [os.path.join(script_dir, "süda.png")]
-    path = next((p for p in candidates if os.path.exists(p)), None)
-    
-    if not path:
-        # Fallback if image missing: create red square
-        surf = pygame.Surface(size)
-        surf.fill((255, 0, 0))
-        return surf, surf
-
-    heart_full = pygame.image.load(path).convert_alpha()
-    if size is not None:
-        heart_full = pygame.transform.scale(heart_full, size)
-
-    heart_empty = heart_full.copy()
-    heart_empty.fill((90, 90, 90, 255), special_flags=pygame.BLEND_RGBA_MULT)
-    return heart_full, heart_empty
-
-def draw_hearts_above_player(screen, player_rect, camera_x, camera_y, hearts, hearts_max, heart_full, heart_empty, padding=6, spacing=6, offset_y=12):
-    hearts = max(0, min(hearts_max, int(hearts)))
-    cx = player_rect.centerx - camera_x
-    top = player_rect.top - camera_y
-    hw, hh = heart_full.get_width(), heart_full.get_height()
-    box_w = padding * 2 + hearts_max * hw + (hearts_max - 1) * spacing
-    box_h = padding * 2 + hh
-    box_x = int(cx - box_w // 2)
-    box_y = int(top - box_h - offset_y)
-    
-    # Clamp to screen
-    box_x = max(0, min(box_x, screen.get_width() - box_w))
-    box_y = max(0, min(box_y, screen.get_height() - box_h))
-
-    for i in range(hearts_max):
-        img = heart_full if i < hearts else heart_empty
-        screen.blit(img, (box_x + padding + i*(hw+spacing), box_y + padding))
 
 def load_image(filename):
     paths_to_check = [os.path.join(script_dir, "pildid", filename), os.path.join(script_dir, filename)]
@@ -98,15 +51,11 @@ def load_image(filename):
 pygame.init()
 WIDTH, HEIGHT = 640, 480
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-pygame.display.set_caption("RPG Quiz Game")
+pygame.display.set_caption("RPG Quiz Game (Simplified)")
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 36) # Default font for quiz
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-
-# --- Load Assets ---
-player_hearts = HEARTS_MAX
-heart_full, heart_empty = load_heart_images(script_dir, size=HEART_ICON_SIZE)
 
 # --- Load TMX Map ---
 try:
@@ -118,6 +67,8 @@ except Exception as e:
 
 tile_width = tmx_data.tilewidth
 tile_height = tmx_data.tileheight
+map_pixel_width = tmx_data.width * tile_width
+map_pixel_height = tmx_data.height * tile_height
 
 # --- Build Wall & Quiz Lists ---
 walls = []
@@ -145,29 +96,6 @@ for layer in tmx_data.visible_layers:
                         quiz_triggers.append((rect, quiz_id))
 
 print(f"DEBUG: Found {len(walls)} solid walls and {len(quiz_triggers)} quiz triggers.")
-
-# --- Minimap Setup ---
-map_pixel_width = tmx_data.width * tile_width
-map_pixel_height = tmx_data.height * tile_height
-minimap_scale = MINIMAP_WIDTH / map_pixel_width
-minimap_height = int(map_pixel_height * minimap_scale)
-minimap_img = pygame.Surface((MINIMAP_WIDTH, minimap_height))
-minimap_img.fill((30, 30, 30))
-minimap_img.set_alpha(220)
-
-# Draw static map to minimap surface
-for layer in tmx_data.visible_layers:
-    if isinstance(layer, pytmx.TiledTileLayer):
-        for x, y, gid in layer:
-            if gid:
-                sx = x * tile_width * minimap_scale
-                sy = y * tile_height * minimap_scale
-                sw = tile_width * minimap_scale
-                sh = tile_height * minimap_scale
-                tile_props = tmx_data.get_tile_properties_by_gid(gid)
-                color = (180, 180, 180) if (tile_props and tile_props.get("solid")) else (60, 80, 60)
-                if tile_props and tile_props.get("quiz_id"): color = (0, 0, 200) # Blue for quiz
-                pygame.draw.rect(minimap_img, color, (sx, sy, sw, sh))
 
 # --- Player Setup ---
 player_standing = load_image("tegelane_seisab.png")
@@ -215,7 +143,7 @@ while running:
                 if event.key == pygame.K_BACKSPACE:
                     user_text = user_text[:-1]
                 elif event.key == pygame.K_RETURN:
-                    if user_text.lower() == current_quiz["answer"].lower():
+                    if user_text.strip().lower() == current_quiz["answer"].lower():
                         GAME_STATE = "success"
                     else:
                         user_text = "" # Wrong answer
@@ -241,8 +169,6 @@ while running:
                     else:
                         screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
                     WIDTH, HEIGHT = screen.get_size()
-                elif event.key == pygame.K_h: player_hearts = max(0, player_hearts - 1)
-                elif event.key == pygame.K_j: player_hearts = min(HEARTS_MAX, player_hearts + 1)
 
     # 2. Game Logic
     if GAME_STATE == "walking":
@@ -305,19 +231,6 @@ while running:
     image_x = hitbox_screen_x - (VISUAL_SIZE - HITBOX_WIDTH) // 2
     image_y = hitbox_screen_y - (VISUAL_SIZE - HITBOX_HEIGHT - 13)
     screen.blit(current_sprite, (image_x, image_y))
-
-    draw_hearts_above_player(screen, player_rect, camera_x, camera_y, player_hearts, HEARTS_MAX, heart_full, heart_empty)
-
-    # Draw Minimap
-    minimap_x = WIDTH - MINIMAP_WIDTH - BORDER_PADDING
-    minimap_y = BORDER_PADDING
-    screen.blit(minimap_img, (minimap_x, minimap_y))
-    pygame.draw.rect(screen, (255, 255, 255), (minimap_x, minimap_y, MINIMAP_WIDTH, minimap_height), 2)
-    
-    # Player dot on minimap
-    player_mini_x = (player_rect.centerx * minimap_scale) + minimap_x
-    player_mini_y = (player_rect.centery * minimap_scale) + minimap_y
-    pygame.draw.circle(screen, (255, 50, 50), (int(player_mini_x), int(player_mini_y)), 3)
 
     # Draw UI Overlays (Quiz)
     if GAME_STATE == "quiz" or GAME_STATE == "success":

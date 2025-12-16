@@ -23,6 +23,9 @@
   <image source="OPSÜS.png" width="42" height="42"/>
  </tile>
  <tile id="14">
+  <properties>
+   <property name="quiz_id" value="prog_1"/>
+  </properties>
   <image source="PROGE.png" width="42" height="42"/>
  </tile>
  <tile id="15">
