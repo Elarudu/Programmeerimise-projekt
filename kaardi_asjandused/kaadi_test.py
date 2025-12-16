@@ -3,10 +3,10 @@ import pytmx
 import os
 
 # --- Constants ---
-VISUAL_SIZE = 100       # Size to draw the player
+VISUAL_SIZE = 150       # Size to draw the player
 HITBOX_WIDTH = 43       # Width of collision
 HITBOX_HEIGHT = 74      # Full height
-PLAYER_SPEED = 8
+PLAYER_SPEED = 12
 
 # --- Quiz Configuration ---
 GAME_STATE = "walking" # Options: "walking", "quiz", "success"
@@ -36,7 +36,6 @@ QUIZ_DATA = {
 }
 
 # --- Functions ---
-
 def load_image(filename):
     paths_to_check = [os.path.join(script_dir, "pildid", filename), os.path.join(script_dir, filename)]
     for path in paths_to_check:
@@ -54,6 +53,8 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("RPG Quiz Game (Simplified)")
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 36) # Default font for quiz
+pygame.mixer.music.load('medieval_muss.mp3')
+pygame.mixer.music.play(-1)
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -207,7 +208,6 @@ while running:
                     elif move_y > 0: player_rect.y -= 10
                     elif move_x < 0: player_rect.x += 10
                     elif move_x > 0: player_rect.x -= 10
-
         # Animation
         if is_moving:
             animation_counter += 1
