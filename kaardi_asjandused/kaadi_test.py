@@ -6,7 +6,7 @@ import os
 VISUAL_SIZE = 100     # Size to draw the player
 HITBOX_WIDTH = 43       # Width of collision
 HITBOX_HEIGHT = 74      # Full height
-PLAYER_SPEED = 12
+PLAYER_SPEED = 10
 
 # --- Quiz Configuration ---
 GAME_STATE = "walking" # Options: "walking", "quiz", "success"
