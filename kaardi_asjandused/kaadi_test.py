@@ -258,6 +258,6 @@ while running:
             screen.blit(cont_surf, (box_x + 50, box_y + 200))
 
     pygame.display.flip()
-    clock.tick(60)
+    clock.tick(144)
 
 pygame.quit()
