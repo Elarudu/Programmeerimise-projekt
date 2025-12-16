@@ -17,7 +17,11 @@ completed_quizzes = [] # Tracks finished quizzes to prevent re-triggering
 # QUIZ DATABASE
 # keys must match the 'quiz_id' property in Tiled
 QUIZ_DATA = {
-    "math_1": {"question": "5 * 5 + 2", "answer": "27", "reward": "3"},
+    "math_1": {
+        "question": "5 * 5 + 2",
+        "answer": "27",
+        "reward": "3"
+        },
     "prog_1": {
         "question": "Goat vana?",
         "answer": "jaan janno", 
@@ -86,9 +90,7 @@ for layer in tmx_data.visible_layers:
                 tile_props = tmx_data.get_tile_properties_by_gid(gid)
                 
                 # Check for Solid Wall
-                is_solid = tile_props and tile_props.get("solid")
-                if gid == 10: is_solid = True 
-                
+                is_solid = tile_props and tile_props.get("solid")                
                 if is_solid:
                     rect = pygame.Rect(x * tile_width, y * tile_height, tile_width, tile_height)
                     walls.append(rect)
@@ -251,7 +253,7 @@ while running:
         elif GAME_STATE == "success":
             pygame.mixer.music.load('kaboom.mp3')
             pygame.mixer.music.play()
-            pygame.mixer.music.queue('medieval_muss.mp3')  
+            pygame.mixer.music.queue('medieval_muss.mp3') 
             win_surf = font.render("CORRECT!", True, (0, 255, 0))
             screen.blit(win_surf, (box_x + 130, box_y + 40))
             
