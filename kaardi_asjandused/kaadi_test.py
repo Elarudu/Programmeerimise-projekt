@@ -3,7 +3,7 @@ import pytmx
 import os
 
 # --- Constants ---
-VISUAL_SIZE = 150       # Size to draw the player
+VISUAL_SIZE = 100     # Size to draw the player
 HITBOX_WIDTH = 43       # Width of collision
 HITBOX_HEIGHT = 74      # Full height
 PLAYER_SPEED = 12
@@ -12,17 +12,12 @@ PLAYER_SPEED = 12
 GAME_STATE = "walking" # Options: "walking", "quiz", "success"
 current_quiz = None    # Holds active quiz data
 user_text = ""         # Stores player typing
-collected_numbers = [] # Stores rewards
 completed_quizzes = [] # Tracks finished quizzes to prevent re-triggering
 
 # QUIZ DATABASE
 # keys must match the 'quiz_id' property in Tiled
 QUIZ_DATA = {
-    "math_1": {
-        "question": "What is 5 * 5 + 2?",
-        "answer": "27",
-        "reward": "4"
-    },
+    "math_1": {"question": "5 * 5 + 2", "answer": "27", "reward": "3"},
     "prog_1": {
         "question": "Goat vana?",
         "answer": "jaan janno", 
@@ -45,7 +40,16 @@ def load_image(filename):
                 return pygame.transform.scale(img, (VISUAL_SIZE, VISUAL_SIZE))
             except Exception: pass
     return pygame.Surface((VISUAL_SIZE, VISUAL_SIZE)) # Return blank surface if missing
-
+def draw_map_layer(camera_x, camera_y):
+    for layer in tmx_data.visible_layers:
+        if isinstance(layer, pytmx.TiledTileLayer):
+            for x, y, gid in layer:
+                tile = tmx_data.get_tile_image_by_gid(gid)
+                if tile:
+                    screen_x = x * tile_width - camera_x
+                    screen_y = y * tile_height - camera_y
+                    if -tile_width < screen_x < WIDTH and -tile_height < screen_y < HEIGHT:
+                        screen.blit(tile, (screen_x, screen_y))
 # --- Init ---
 pygame.init()
 WIDTH, HEIGHT = 640, 480
@@ -114,16 +118,6 @@ current_sprite = player_standing
 animation_frame = 0
 animation_counter = 0
 
-def draw_map_layer(camera_x, camera_y):
-    for layer in tmx_data.visible_layers:
-        if isinstance(layer, pytmx.TiledTileLayer):
-            for x, y, gid in layer:
-                tile = tmx_data.get_tile_image_by_gid(gid)
-                if tile:
-                    screen_x = x * tile_width - camera_x
-                    screen_y = y * tile_height - camera_y
-                    if -tile_width < screen_x < WIDTH and -tile_height < screen_y < HEIGHT:
-                        screen.blit(tile, (screen_x, screen_y))
 
 # --- Main Game Loop ---
 running = True
@@ -155,8 +149,6 @@ while running:
 
         elif GAME_STATE == "success":
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                if current_quiz["reward"] not in collected_numbers:
-                    collected_numbers.append(current_quiz["reward"])
                 completed_quizzes.append(current_quiz["id"])
                 GAME_STATE = "walking"
 
