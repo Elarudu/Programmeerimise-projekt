@@ -39,6 +39,10 @@ while mäng_töötab:
     if klahvid[pygame.K_DOWN]:
         tegelase_rect.y += tegelase_kiirus
 
+    #kaamera asukoht    
+    kaamera_x = tegelase_rect.x - laius // 2
+    kaamera_y = tegelase_rect.y - kõrgus // 2
+
     #joonistame ekraanile midagi
     ekraan.fill((0, 0, 0))
     #kaardi joonistamine
@@ -52,10 +56,16 @@ while mäng_töötab:
                 ruut = tmxdata.get_tile_image_by_gid(gid)
                 #kui ruut eksisteerib
                 if ruut:
-                    ekraan_x = x * tmxdata.tilewidth
-                    ekraan_y = y * tmxdata.tileheight
+                    ekraan_x = x * tmxdata.tilewidth - kaamera_x
+                    ekraan_y = y * tmxdata.tileheight - kaamera_y
                     ekraan.blit(ruut, (ekraan_x, ekraan_y))
     #tegelase joonistamine
+    tegelase_joonistus_rect = pygame.Rect(
+        tegelase_rect.x - kaamera_x,
+        tegelase_rect.y - kaamera_y,
+        tegelase_rect.width,
+        tegelase_rect.height
+    )
     pygame.draw.rect(ekraan, (255, 0, 0), tegelase_rect)
     pygame.display.flip()
     clock.tick(60)
