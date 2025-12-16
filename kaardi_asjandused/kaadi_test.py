@@ -209,7 +209,6 @@ while running:
                 current_sprite = player_walk1 if animation_frame == 0 else player_walk2
         else:
             current_sprite = player_standing
-
     # 3. Drawing
     camera_x = max(0, min(player_rect.centerx - WIDTH // 2, map_pixel_width - WIDTH))
     camera_y = max(0, min(player_rect.centery - HEIGHT // 2, map_pixel_height - HEIGHT))
@@ -250,6 +249,9 @@ while running:
             screen.blit(hint_surf, (box_x + 20, box_y + 200))
 
         elif GAME_STATE == "success":
+            pygame.mixer.music.load('kaboom.mp3')
+            pygame.mixer.music.play()
+            pygame.mixer.music.queue('medieval_muss.mp3')  
             win_surf = font.render("CORRECT!", True, (0, 255, 0))
             screen.blit(win_surf, (box_x + 130, box_y + 40))
             
