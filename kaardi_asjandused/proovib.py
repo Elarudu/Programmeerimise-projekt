@@ -29,6 +29,9 @@ kababoom = pygame.mixer.Sound('kaboom.mp3')
 Hitbox_laius = 43
 Hitbox_kõrgus = 74
 
+#Mündi koguja
+mündid = 0
+elud = 3
 
 #tegelase värk
 tegelase_suurus = 100
@@ -45,11 +48,11 @@ tegelase_kiirus = 30
 #mängu_režiim
 tegelase_tegevus = "kõnnib"
 kui_kõnnib = False
-
 #sõnastik küsimustele
 küsimused = {
-    "mata_küssa": {"küsimus": "Kas nullmaatriksi pöördmaatriks on nullmaatriks?", "vastus": "jah", "salanumber": 67},
-    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente?", "vastus": "ei", "salanumber": 7},
+    "mata_küssa": {"küsimus": "Kas nullmaatriksi pöördmaatriks on nullmaatriks (ei/jah)?", "vastus": "jah", "salanumber": 67},
+    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente? (ei/jah)", "vastus": "ei", "salanumber": 7
+                    },
 }
 
 #tick kiirus
@@ -115,9 +118,9 @@ while mäng_töötab:
                         kababoom.play()
                         tegelase_tegevus = "näeb_salanumbrit"
                         mängija_sisestus = ""
+                        mündid += 1
                     else:
-                        print("lollaka alert!")
-                        mängija_sisestus = ""
+                        elud -= 1
             else:
                 mängija_sisestus += vajutus.unicode
         #salanumbri vaatamine
@@ -240,7 +243,18 @@ while mäng_töötab:
         ekraan.blit(uksekoodi_tekst, (25, 120))
         uksekoodi_aken = font.render("Kood: " + mängija_sisestus, True, (100, 255, 100))
         ekraan.blit(uksekoodi_aken, (25, 160))
-    #joonistame mängija    
+    #surma joonistus
+    if elud == 0:
+        tegelase_tegevus = "surnud"
+        tavaline = tegelane_surnud
+        tekst = font.render("Kukkusid delta majamängu läbi!", True, (0, 0, 0))
+        ekraan.blit(tekst, (200, 70))
+    #elude joonistus
+    elude_kogus = font.render(f"Elud: {elud}", True, (0, 0, 0))
+    ekraan.blit(elude_kogus, (564, 0))
+    #müntide joonistus
+    müntide_kogus = font.render(f"Mündid: {mündid}", True, (0, 0, 0))
+    ekraan.blit(müntide_kogus, (538, 30))
     pygame.draw.rect(ekraan, (255, 0, 0), mängija_rect)
     ekraan.blit(tavaline, (300, 200))
     pygame.display.flip()
