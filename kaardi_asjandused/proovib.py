@@ -218,7 +218,7 @@ while mäng_töötab:
             if muutus_x > 0:  # liikudes paremalt seina vastu
                 mängija_rect.right = sein.left  # muudad tegelase parema külje sama asukohaks nagu seina vasak külg
             if muutus_x < 0:  # liikudes vasakult seina vastu
-                mängija_rect.left = sein.right  #muudad tegelase vasaku külje sama asukohaks nagu seina parem külg
+                mängija_rect.left = sein.right #muudad tegelase vasaku külje sama asukohaks nagu seina parem külg
     #tegelase liikumine vol.2 jätkub (üles, alla)
     mängija_rect.y += muutus_y
     for sein in seinad:
@@ -302,7 +302,8 @@ while mäng_töötab:
         ekraan.blit(söökla_tekst, (25, 120))
         munchi_aken = font.render(f"Sisesta 'osta' et saada lõuna: " + mängija_sisestus, True, (100, 255, 100))
         ekraan.blit(munchi_aken, (25, 160))
-
+    if tegelase_tegevus != "surnud" and tegelase_tegevus != "kõnnib":
+        tavaline = None
     #surma joonistus
     if elud == 0:
         tegelase_tegevus = "surnud"
@@ -315,7 +316,10 @@ while mäng_töötab:
     #müntide joonistus
     müntide_kogus = font.render(f"Mündid: {mündid}", True, (0, 0, 0))
     ekraan.blit(müntide_kogus, (538, 30))
-    ekraan.blit(tavaline, (300, 200))
+    #joonistame mängija
+    if tavaline != None:
+        ekraan.blit(tavaline, (300, 200))
+
     pygame.display.flip()
     clock.tick(60)
 pygame.quit()
