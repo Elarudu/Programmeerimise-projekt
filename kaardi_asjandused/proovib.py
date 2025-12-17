@@ -51,7 +51,10 @@ kui_kõnnib = False
 #sõnastik küsimustele
 küsimused = {
     "mata_küssa": {"küsimus": "Kas nullmaatriksi pöördmaatriks on nullmaatriks (ei/jah)?", "vastus": "jah", "salanumber": 67},
-    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente? (ei/jah)", "vastus": "ei", "salanumber": 7
+    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente? (ei/jah)", "vastus": "ei", "salanumber": 7},
+    "sissejuh_küssa": {"küsimus": "Kas Mirjamile meeldivad kassid(jah/ei)", "vastus": "jah", "salanumber": 67},
+    "opsüs_küssa": {"küsimus": "Kas Terry Davis on maailma parima programmeerija (jah/ei)?", "vastus": "jah", "salanumber": 67},
+    "aar_küssa": {"küsimus": "Mis on 01000011 ASCII tabeli järgi?", "vastus": "67", "salanumber": 67
                     },
 }
 
@@ -120,7 +123,7 @@ while mäng_töötab:
     for vajutus in pygame.event.get():
         if vajutus.type == pygame.QUIT:
             mäng_töötab = False
-        
+        #küsimusele vastamine
         elif tegelase_tegevus == "vastab_küssale" and vajutus.type == pygame.KEYDOWN:
             if vajutus.key == pygame.K_BACKSPACE:
                 mängija_sisestus = mängija_sisestus[:-1]
@@ -133,7 +136,9 @@ while mäng_töötab:
                     mängija_sisestus = ""
                     mündid += 1
                 else:
+                    tegelase_tegevus = "vale_vastus"
                     elud -= 1
+                    mängija_sisestus = ""
             else:
                 mängija_sisestus += vajutus.unicode
 
@@ -148,12 +153,18 @@ while mäng_töötab:
                             kababoom.play()
                             mündid -= 2
                             elud += 1
+                            mängija_sisestus = ""
+                            tegelase_tegevus = "kõnnib"
                         else:
                             print("Pole piisavalt münte!")
                             tegelase_tegevus = "kõnnib"
                             mängija_sisestus = "" 
             else:
                 mängija_sisestus += vajutus.unicode
+        #vale vastuse kinnitamine
+        elif tegelase_tegevus == "vale_vastus" and vajutus.type == pygame.KEYDOWN:
+            if vajutus.key == pygame.K_RETURN:
+                tegelase_tegevus = "vastab_küssale"
         #salanumbri vaatamine
         elif tegelase_tegevus == "näeb_salanumbrit" and vajutus.type == pygame.KEYDOWN:
             if vajutus.key == pygame.K_RETURN:
@@ -266,6 +277,11 @@ while mäng_töötab:
         ekraan.blit(küsimus_tekst, (25, 120))
         vastus_aken = font.render("Vastus: " + mängija_sisestus, True, (100, 255, 100))
         ekraan.blit(vastus_aken, (25, 160))
+    #vale vastuse aken
+    elif tegelase_tegevus == "vale_vastus":
+        pygame.draw.rect(ekraan, (50, 50, 60), (100, 100, 400, 200))
+        vale_vastus_aken = font.render("Vale vastus! Proovi uuesti.", True, (255, 0, 0))
+        ekraan.blit(vale_vastus_aken, (175, 150))
     #salanumbri aken   
     elif tegelase_tegevus == "näeb_salanumbrit":
         pygame.draw.rect(ekraan, (50, 50, 60), (100, 100, 400, 200))
@@ -299,7 +315,6 @@ while mäng_töötab:
     #müntide joonistus
     müntide_kogus = font.render(f"Mündid: {mündid}", True, (0, 0, 0))
     ekraan.blit(müntide_kogus, (538, 30))
-
     ekraan.blit(tavaline, (300, 200))
     pygame.display.flip()
     clock.tick(60)
