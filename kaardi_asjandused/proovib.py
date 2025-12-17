@@ -255,6 +255,7 @@ while mäng_töötab:
     #müntide joonistus
     müntide_kogus = font.render(f"Mündid: {mündid}", True, (0, 0, 0))
     ekraan.blit(müntide_kogus, (538, 30))
+    
     pygame.draw.rect(ekraan, (255, 0, 0), mängija_rect)
     ekraan.blit(tavaline, (300, 200))
     pygame.display.flip()
