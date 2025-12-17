@@ -16,14 +16,28 @@ def laadi_pilt(faili_nimi):
 pygame.init()
 pygame.mixer.init()
 #ekraani värk
-laius = 640
-kõrgus = 480
+laius = 1920
+kõrgus = 1080
 ekraan = pygame.display.set_mode((laius, kõrgus))
 #taustamuss
 bgm = pygame.mixer.Sound('medieval_muss.mp3')
 bgm.play(-1)
 #sfx
 kababoom = pygame.mixer.Sound('kaboom.mp3')
+
+#seinad
+seinad = []
+for kiht in tmxdata.visible_layers:
+    if isinstance(kiht, pytmx.TiledTileLayer):
+        for x, y, gid in kiht:
+            omadused = tmxdata.get_tile_properties_by_gid(gid)
+            if omadused:
+                if omadused.get("solid"):
+                    sein = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
+                    seinad.append(sein)
+                if omadused.get("spawnimis_koht"):
+                    spawn = (x * tmxdata.tilewidth, y * tmxdata.tileheight)
+print(len(seinad), "seina ruutu leitud.")
 
 #Hitboxi muutujad
 Hitbox_laius = 43
@@ -39,7 +53,7 @@ tegelane_seisab = laadi_pilt("tegelane_seisab.png")
 tegelane_konnib1 = laadi_pilt("tegelane_konnib(1).png")
 tegelane_konnib2 = laadi_pilt("tegelane_konnib(2).png")
 tegelane_surnud = laadi_pilt("tegelane_surnud.png")
-tegelane_x, tegelane_y = 300, 1200
+tegelane_x, tegelane_y = spawn
 mängija_rect = pygame.Rect(tegelane_x, tegelane_y, Hitbox_laius, Hitbox_kõrgus)
 tavaline = tegelane_seisab
 animatsiooni_framed = 0
@@ -71,17 +85,6 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 map_path = os.path.join(script_dir, "level.tmx")
 tmxdata = pytmx.load_pygame(map_path)
 
-#seinad
-seinad = []
-for kiht in tmxdata.visible_layers:
-    if isinstance(kiht, pytmx.TiledTileLayer):
-        for x, y, gid in kiht:
-            omadused = tmxdata.get_tile_properties_by_gid(gid)
-            if omadused:
-                if omadused.get("solid"):
-                    sein = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
-                    seinad.append(sein)
-print(len(seinad), "seina ruutu leitud.")
 
 #küssa kohade leidmine
 küsimuste_kohad = []
