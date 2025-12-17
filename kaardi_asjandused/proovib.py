@@ -120,6 +120,7 @@ while mäng_töötab:
     for vajutus in pygame.event.get():
         if vajutus.type == pygame.QUIT:
             mäng_töötab = False
+        
         elif tegelase_tegevus == "vastab_küssale" and vajutus.type == pygame.KEYDOWN:
             if vajutus.key == pygame.K_BACKSPACE:
                 mängija_sisestus = mängija_sisestus[:-1]
@@ -135,6 +136,8 @@ while mäng_töötab:
                     elud -= 1
             else:
                 mängija_sisestus += vajutus.unicode
+
+        #söökla munchi ostmine
         elif tegelase_tegevus == "ostab_munchi" and vajutus.type == pygame.KEYDOWN:
             if vajutus.key == pygame.K_BACKSPACE:
                 mängija_sisestus = mängija_sisestus[:-1]
@@ -227,7 +230,7 @@ while mäng_töötab:
         if mängija_rect.colliderect(koht):
             tegelase_tegevus = "uksekoodi_vastamine"
             mängija_rect.y += 1
-    #Söökla trigger
+    #söökla trigger
     for söögi_nämnäm in söökla_koht:
         if mängija_rect.colliderect(söögi_nämnäm):
             tegelase_tegevus = "ostab_munchi"
@@ -297,7 +300,6 @@ while mäng_töötab:
     müntide_kogus = font.render(f"Mündid: {mündid}", True, (0, 0, 0))
     ekraan.blit(müntide_kogus, (538, 30))
 
-    pygame.draw.rect(ekraan, (255, 0, 0), mängija_rect)
     ekraan.blit(tavaline, (300, 200))
     pygame.display.flip()
     clock.tick(60)

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.11.2" name="map" tilewidth="42" tileheight="42" tilecount="8" columns="0">
+<tileset version="1.10" tiledversion="1.11.2" name="map" tilewidth="96" tileheight="96" tilecount="8" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="9">
   <image source="TILE1.png" width="42" height="42"/>
@@ -38,6 +38,6 @@
   <properties>
    <property name="quiz_id" value="mata_küssa"/>
   </properties>
-  <image source="KÕM.png" width="42" height="42"/>
+  <image source="KÕM.png" width="96" height="96"/>
  </tile>
 </tileset>
