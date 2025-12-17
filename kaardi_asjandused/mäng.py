@@ -18,7 +18,7 @@ pygame.mixer.init()
 #ekraani värk
 laius = 640
 kõrgus = 480
-ekraan = pygame.display.set_mode((laius, kõrgus))
+ekraan = pygame.display.set_mode((laius, kõrgus), pygame.SCALED | pygame.RESIZABLE) #Laseb fullscreenile panna ja skaleerib 640x480 fullscreeniks, et pixled ei läheks nihkesse.
 #taustamuss
 bgm = pygame.mixer.Sound('medieval_muss.mp3')
 bgm.play(-1)
@@ -321,13 +321,13 @@ while mäng_töötab:
     if elud == 0:
         tegelase_tegevus = "surnud"
         tavaline = tegelane_surnud
-        tekst = font.render("Kukkusid delta majamängu läbi!", True, (0, 0, 0))
-        ekraan.blit(tekst, (200, 70))
+        tekst = font.render("Kukkusid delta majamängu läbi!", True, (255, 0, 0))
+        ekraan.blit(tekst, (170, 70))
     #elude joonistus
-    elude_kogus = font.render(f"Elud: {elud}", True, (0, 0, 0))
+    elude_kogus = font.render(f"Elud: {elud}", True, (255, 0, 255))
     ekraan.blit(elude_kogus, (564, 0))
     #müntide joonistus
-    müntide_kogus = font.render(f"Mündid: {mündid}", True, (0, 0, 0))
+    müntide_kogus = font.render(f"Mündid: {mündid}", True, (255, 105, 55))
     ekraan.blit(müntide_kogus, (538, 30))
     #joonistame mängija
     if tavaline != None:
