@@ -3,10 +3,16 @@ import pytmx
 import os
 
 pygame.init()
+pygame.mixer.init()
 #ekraani värk
 laius = 640
 kõrgus = 480
 ekraan = pygame.display.set_mode((laius, kõrgus))
+#taustamuss
+bgm = pygame.mixer.Sound('medieval_muss.mp3')
+bgm.play(-1)
+#sfx
+kababoom = pygame.mixer.Sound('kaboom.mp3')
 
 #tegelase värk
 tegelase_kiirus = 12
@@ -69,6 +75,8 @@ while mäng_töötab:
             elif vajutus.key == pygame.K_RETURN:
                     if mängija_sisestus.strip().lower() == praegune_küsimus["vastus"].lower():
                         print("Õige!")
+                        #lahe sfx
+                        kababoom.play()
                         tegelase_tegevus = "kõnnib"
                         mängija_sisestus = ""
                     else:
@@ -76,7 +84,7 @@ while mäng_töötab:
                         mängija_sisestus = ""
             else:
                 mängija_sisestus += vajutus.unicode
-        
+
 
     #tegelase liikumine
     klahvid = pygame.key.get_pressed()
