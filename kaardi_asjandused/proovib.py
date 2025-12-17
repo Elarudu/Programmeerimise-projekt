@@ -95,9 +95,19 @@ for kiht in tmxdata.visible_layers:
                 if omadused.get("uksekood"):
                     uksekoodi_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
                     uksekoodi_kohad.append(uksekoodi_koht)
+söökla_koht = []
+for kiht in tmxdata.visible_layers:
+    if isinstance(kiht, pytmx.TiledTileLayer):
+        for x, y, gid in kiht:
+            omadused = tmxdata.get_tile_properties_by_gid(gid)
+            if omadused:
+                if omadused.get("söökla"):
+                    küssa_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
+                    küsimuste_kohad.append((küssa_koht, omadused["söökla"]))
 
 font = pygame.font.Font(None, 32)
 praegune_küsimus = None
+söökla_küsimus = None
 mängija_sisestus = ""
 uksekood = "67"
                     
@@ -111,7 +121,18 @@ while mäng_töötab:
         elif tegelase_tegevus == "vastab_küssale" and vajutus.type == pygame.KEYDOWN:
             if vajutus.key == pygame.K_BACKSPACE:
                 mängija_sisestus = mängija_sisestus[:-1]
+        elif tegelase_tegevus == "ostab_munchi" and vajutus.type == pygame.KEYDOWN:
+            if vajutus.key == pygame.K_BACKSPACE:
+                mängija_sisestus = mängija_sisestus[:-1]
             elif vajutus.key == pygame.K_RETURN:
+                    if söökla_küsimus.strip().lower() == "osta":
+                        if mündid >= 3:
+                            print("Ostetud!")
+                            kababoom.play()
+                            mündid -= 3
+                            elud += 1
+                        else:
+                            print("Pole piisavalt münte!")
                     if mängija_sisestus.strip().lower() == praegune_küsimus["vastus"].lower():
                         print("Õige!")
                         #lahe sfx
@@ -199,6 +220,11 @@ while mäng_töötab:
         if mängija_rect.colliderect(koht):
             tegelase_tegevus = "uksekoodi_vastamine"
             mängija_rect.y += 1
+    #Söökla trigger
+    for maa in söökla_koht:
+        if mängija_rect.colliderect(maa):
+            tegelase_tegevus = "Ostab munchi"
+            mängija_rect.y += 1
 
     #kaamera asukoht    
     kaamera_x = mängija_rect.x - 300
@@ -243,6 +269,14 @@ while mäng_töötab:
         ekraan.blit(uksekoodi_tekst, (25, 120))
         uksekoodi_aken = font.render("Kood: " + mängija_sisestus, True, (100, 255, 100))
         ekraan.blit(uksekoodi_aken, (25, 160))
+    #söökla aken
+    elif tegelase_tegevus == "ostab_munchi":
+        pygame.draw.rect(ekraan, (50, 50, 50), (0, 100, 800, 200))
+        söökla_tekst = font.render("Tere tulemast sööklasse! Lõuna maksab 2 münti.", True, (255, 255, 255))
+        ekraan.blit(söökla_tekst, (25, 120))
+        munchi_aken = font.render("Sisesta 'osta' et osta lõuna.", + mängija_sisestus, True, (100, 255, 100))
+        ekraan.blit(munchi_aken, (25, 160))
+
     #surma joonistus
     if elud == 0:
         tegelase_tegevus = "surnud"
