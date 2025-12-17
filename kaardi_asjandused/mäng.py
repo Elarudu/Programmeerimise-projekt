@@ -60,6 +60,9 @@ küsimused = {
                     },
 }
 
+vastatud_küsimused = []
+munch_ostetud = False
+
 #tick kiirus
 clock = pygame.time.Clock()
 
@@ -137,6 +140,7 @@ while mäng_töötab:
                     tegelase_tegevus = "näeb_salanumbrit"
                     mängija_sisestus = ""
                     mündid += 1
+                    vastatud_küsimused.append(küsimused[id])
                 else:
                     tegelase_tegevus = "vale_vastus"
                     elud -= 1
@@ -157,10 +161,14 @@ while mäng_töötab:
                             elud += 1
                             mängija_sisestus = ""
                             tegelase_tegevus = "kõnnib"
+                            munch_ostetud = True
                         else:
                             print("Pole piisavalt münte!")
                             tegelase_tegevus = "kõnnib"
                             mängija_sisestus = "" 
+                    else:
+                        tegelase_tegevus = "kõnnib"
+                        mängija_sisestus = ""
             else:
                 mängija_sisestus += vajutus.unicode
         #vale vastuse kinnitamine
@@ -234,20 +242,23 @@ while mäng_töötab:
     #küsimuse trigger
     for ala, id in küsimuste_kohad:
         if mängija_rect.colliderect(ala):
-            tegelase_tegevus = "vastab_küssale"
-            praegune_küsimus = küsimused[id]
-            print("alustame küsimisega!", id)
-            mängija_rect.y -= 1
+            if id not in vastatud_küsimused:
+                tegelase_tegevus = "vastab_küssale"
+                praegune_küsimus = küsimused[id]
+                print("alustame küsimisega!", id)
+                mängija_rect.y -= 10
+                vastatud_küsimused.append(id)
     #uksekoodi trigger
     for koht in uksekoodi_kohad:
         if mängija_rect.colliderect(koht):
             tegelase_tegevus = "uksekoodi_vastamine"
-            mängija_rect.y += 1
+            mängija_rect.y += 10
     #söökla trigger
     for söögi_nämnäm in söökla_koht:
         if mängija_rect.colliderect(söögi_nämnäm):
-            tegelase_tegevus = "ostab_munchi"
-            mängija_rect.y += 1
+            if munch_ostetud != True:
+                tegelase_tegevus = "ostab_munchi"
+                mängija_rect.y += 10
 
     #kaamera asukoht    
     kaamera_x = mängija_rect.x - 300
