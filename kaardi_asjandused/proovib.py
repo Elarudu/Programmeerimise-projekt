@@ -10,7 +10,16 @@ ekraan = pygame.display.set_mode((laius, kõrgus))
 
 #tegelase värk
 tegelase_kiirus = 5
-tegelase_rect = pygame.Rect(300, 200, 50, 50)
+tegelase_rect = pygame.Rect(100, 500, 50, 50)
+
+#mängu_režiim
+tegelase_tegevus = "kõnnib"
+
+#sõnastik küsimustele
+küsimused = {
+    "mata_küssa": {"küsimus": "Kas nullmaatriksi pöördmaatriks on nullmaatriks?", "vastus": "jah"},
+    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente?", "vastus": "ei"},
+}
 
 #tick kiirus
 clock = pygame.time.Clock()
@@ -20,6 +29,33 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 map_path = os.path.join(script_dir, "level.tmx")
 tmxdata = pytmx.load_pygame(map_path)
 
+#seinad
+seinad = []
+for kiht in tmxdata.visible_layers:
+    if isinstance(kiht, pytmx.TiledTileLayer):
+        for x, y, gid in kiht:
+            omadused = tmxdata.get_tile_properties_by_gid(gid)
+            if omadused:
+                if omadused.get("solid"):
+                    sein = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
+                    seinad.append(sein)
+print(len(seinad), "seina ruutu leitud.")
+
+#küssad
+küsimuste_kohad = []
+for kiht in tmxdata.visible_layers:
+    if isinstance(kiht, pytmx.TiledTileLayer):
+        for x, y, gid in kiht:
+            omadused = tmxdata.get_tile_properties_by_gid(gid)
+            if omadused:
+                if omadused.get("quiz_id"):
+                    küssa_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
+                    küsimuste_kohad.append((küssa_koht, omadused["quiz_id"]))
+
+font = pygame.font.Font(None, 32)
+praegune_küsimus = None
+mängija_sisestus = ""
+                    
 mäng_töötab = True
 
 while mäng_töötab:
@@ -27,25 +63,66 @@ while mäng_töötab:
     for vajutus in pygame.event.get():
         if vajutus.type == pygame.QUIT:
             mäng_töötab = False
+        elif tegelase_tegevus == "vastab_küssale" and vajutus.type == pygame.KEYDOWN:
+            if vajutus.key == pygame.K_BACKSPACE:
+                mängija_sisestus = mängija_sisestus[:-1]
+            elif vajutus.key == pygame.K_RETURN:
+                    if mängija_sisestus.strip().lower() == praegune_küsimus["vastus"].lower():
+                        print("Õige!")
+                        tegelase_tegevus = "kõnnib"
+                        mängija_sisestus = ""
+                    else:
+                        print("lollaka alert!")
+                        mängija_sisestus = ""
+            else:
+                mängija_sisestus += vajutus.unicode
+        
 
     #tegelase liikumine
     klahvid = pygame.key.get_pressed()
-    if klahvid[pygame.K_LEFT]:
-        tegelase_rect.x -= tegelase_kiirus
-    if klahvid[pygame.K_RIGHT]:
-        tegelase_rect.x += tegelase_kiirus  
-    if klahvid[pygame.K_UP]:
-        tegelase_rect.y -= tegelase_kiirus
-    if klahvid[pygame.K_DOWN]:
-        tegelase_rect.y += tegelase_kiirus
+    muutus_x = 0
+    muutus_y = 0
+    if tegelase_tegevus == "kõnnib":
+        if klahvid[pygame.K_LEFT]: muutus_x = -tegelase_kiirus
+        if klahvid[pygame.K_RIGHT]: muutus_x = tegelase_kiirus
+        if klahvid[pygame.K_UP]: muutus_y = -tegelase_kiirus
+        if klahvid[pygame.K_DOWN]: muutus_y = tegelase_kiirus
 
+    #tegelase liikumine vol.2 (vasak, parem)
+    tegelase_rect.x += muutus_x
+    for sein in seinad:
+        #kas tegelase rect puutub seina rect
+        if tegelase_rect.colliderect(sein):
+            if muutus_x > 0:  # liikudes paremalt seina vastu
+                tegelase_rect.right = sein.left  # muudad tegelase parema külje sama asukohaks nagu seina vasak külg
+            if muutus_x < 0:  # liikudes vasakult seina vastu
+                tegelase_rect.left = sein.right  #muudad tegelase vasaku külje sama asukohaks nagu seina parem külg
+    #tegelase liikumine vol.2 jätkub (üles, alla)
+    tegelase_rect.y += muutus_y
+    for sein in seinad:
+        #kas tegelase rect puutub seina rect
+        if tegelase_rect.colliderect(sein):
+            if muutus_y > 0:  # liikudes alt seina vastu
+                tegelase_rect.bottom = sein.top  # muudad tegelase alumise külje sama asukohaks nagu seina ülemine külg
+            if muutus_y < 0:  # liikudes ülevalt seina vastu
+                tegelase_rect.top = sein.bottom  #muudad tegelase ülemise külje sama asukohaks nagu seina alumine külg
+    
+    #küsimuse trigger
+    for ala, id in küsimuste_kohad:
+        if tegelase_rect.colliderect(ala):
+            tegelase_tegevus = "vastab_küssale"
+            praegune_küsimus = küsimused[id]
+            print("alustame küsimisega!", id)
+            tegelase_rect.y -= 1
+    
     #kaamera asukoht    
-    kaamera_x = tegelase_rect.x - laius // 2
-    kaamera_y = tegelase_rect.y - kõrgus // 2
+    kaamera_x = tegelase_rect.x - 300
+    kaamera_y = tegelase_rect.y - 200
 
-    #joonistame ekraanile midagi
+    #joonistame ekraanile backgroundi
     ekraan.fill((0, 0, 0))
-    #kaardi joonistamine
+
+    #KAARDI JOONISTAMINE
     #alustab iga kaardi kontrollimist
     for kiht in tmxdata.visible_layers:
         #kui see on ruudu  kiht (ehk mitte pildi või object kiht)
@@ -66,8 +143,16 @@ while mäng_töötab:
         tegelase_rect.width,
         tegelase_rect.height
     )
-    pygame.draw.rect(ekraan, (255, 0, 0), tegelase_rect)
+    #joonistame kasti küssale
+    if tegelase_tegevus == "vastab_küssale":
+        #küsimuse aken
+        pygame.draw.rect(ekraan, (50, 50, 50), (100, 100, 440, 200))
+        küsimus_tekst = font.render(praegune_küsimus["küsimus"], True, (255, 255, 255))
+        ekraan.blit(küsimus_tekst, (120, 120))
+        vastus_aken = font.render("Vastus: " + mängija_sisestus, True, (100, 255, 100))
+        ekraan.blit(vastus_aken, (120, 160))
+    
+    pygame.draw.rect(ekraan, (255, 0, 0), tegelase_joonistus_rect)
     pygame.display.flip()
     clock.tick(60)
 pygame.quit()
-    

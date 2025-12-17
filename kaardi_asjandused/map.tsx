@@ -24,16 +24,19 @@
  </tile>
  <tile id="14">
   <properties>
-   <property name="quiz_id" value="prog_1"/>
+   <property name="quiz_id" value="proge_küssa"/>
   </properties>
   <image source="PROGE.png" width="42" height="42"/>
  </tile>
  <tile id="15">
+  <properties>
+   <property name="quiz_id" value="eriala_küssa"/>
+  </properties>
   <image source="SISSEJ..png" width="42" height="42"/>
  </tile>
  <tile id="16">
   <properties>
-   <property name="quiz_id" value="math_1"/>
+   <property name="quiz_id" value="mata_küssa"/>
   </properties>
   <image source="KÕM.png" width="42" height="42"/>
  </tile>
