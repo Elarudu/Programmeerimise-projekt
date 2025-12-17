@@ -9,7 +9,7 @@ kõrgus = 480
 ekraan = pygame.display.set_mode((laius, kõrgus))
 
 #tegelase värk
-tegelase_kiirus = 5
+tegelase_kiirus = 12
 tegelase_rect = pygame.Rect(100, 500, 50, 50)
 
 #mängu_režiim
@@ -146,11 +146,11 @@ while mäng_töötab:
     #joonistame kasti küssale
     if tegelase_tegevus == "vastab_küssale":
         #küsimuse aken
-        pygame.draw.rect(ekraan, (50, 50, 50), (100, 100, 440, 200))
+        pygame.draw.rect(ekraan, (50, 50, 50), (0, 100, 800, 200))
         küsimus_tekst = font.render(praegune_küsimus["küsimus"], True, (255, 255, 255))
-        ekraan.blit(küsimus_tekst, (120, 120))
+        ekraan.blit(küsimus_tekst, (25, 120))
         vastus_aken = font.render("Vastus: " + mängija_sisestus, True, (100, 255, 100))
-        ekraan.blit(vastus_aken, (120, 160))
+        ekraan.blit(vastus_aken, (25, 160))
     
     pygame.draw.rect(ekraan, (255, 0, 0), tegelase_joonistus_rect)
     pygame.display.flip()
