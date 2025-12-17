@@ -51,7 +51,10 @@ kui_kõnnib = False
 #sõnastik küsimustele
 küsimused = {
     "mata_küssa": {"küsimus": "Kas nullmaatriksi pöördmaatriks on nullmaatriks (ei/jah)?", "vastus": "jah", "salanumber": 67},
-    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente? (ei/jah)", "vastus": "ei", "salanumber": 7
+    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente? (ei/jah)", "vastus": "ei", "salanumber": 7},
+    "Sissejuh_küssa": {"küsimus": "Kas Mirjamile meeldivad kassid(jah/ei)", "vastus": "jah", "salanumber": 67},
+    "Opsüs_küssa": {"küsimus": "Kas Terry Davis on maailma parima programmeerija (jah/ei)?", "vastus": "jah", "salanumber": 67},
+    "AAR_Küssa": {"küsimus": "Mis on 01000011 ASCII tabeli järgi?", "vastus": "67", "salanumber": 67
                     },
 }
 
@@ -296,7 +299,7 @@ while mäng_töötab:
     #müntide joonistus
     müntide_kogus = font.render(f"Mündid: {mündid}", True, (0, 0, 0))
     ekraan.blit(müntide_kogus, (538, 30))
-
+    #joonistame mängija
     pygame.draw.rect(ekraan, (255, 0, 0), mängija_rect)
     ekraan.blit(tavaline, (300, 200))
     pygame.display.flip()
