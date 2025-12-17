@@ -15,7 +15,7 @@ bgm.play(-1)
 kababoom = pygame.mixer.Sound('kaboom.mp3')
 
 #tegelase värk
-tegelase_kiirus = 12
+tegelase_kiirus = 30
 tegelase_rect = pygame.Rect(100, 500, 50, 50)
 
 #mängu_režiim
@@ -23,8 +23,8 @@ tegelase_tegevus = "kõnnib"
 
 #sõnastik küsimustele
 küsimused = {
-    "mata_küssa": {"küsimus": "Kas nullmaatriksi pöördmaatriks on nullmaatriks?", "vastus": "jah"},
-    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente?", "vastus": "ei"},
+    "mata_küssa": {"küsimus": "Kas nullmaatriksi pöördmaatriks on nullmaatriks?", "vastus": "jah", "salanumber": 67},
+    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente?", "vastus": "ei", "salanumber": 7},
 }
 
 #tick kiirus
@@ -47,7 +47,7 @@ for kiht in tmxdata.visible_layers:
                     seinad.append(sein)
 print(len(seinad), "seina ruutu leitud.")
 
-#küssad
+#küssa kohade leidmine
 küsimuste_kohad = []
 for kiht in tmxdata.visible_layers:
     if isinstance(kiht, pytmx.TiledTileLayer):
@@ -57,15 +57,26 @@ for kiht in tmxdata.visible_layers:
                 if omadused.get("quiz_id"):
                     küssa_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
                     küsimuste_kohad.append((küssa_koht, omadused["quiz_id"]))
+#uksekoodi asukoha leidmine                    
+uksekoodi_kohad = []
+for kiht in tmxdata.visible_layers:
+    if isinstance(kiht, pytmx.TiledTileLayer):
+        for x, y, gid in kiht:
+            omadused = tmxdata.get_tile_properties_by_gid(gid)
+            if omadused:
+                if omadused.get("uksekood"):
+                    uksekoodi_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
+                    uksekoodi_kohad.append(uksekoodi_koht)
 
 font = pygame.font.Font(None, 32)
 praegune_küsimus = None
 mängija_sisestus = ""
+uksekood = "67"
                     
 mäng_töötab = True
 
 while mäng_töötab:
-    #Kinni panemine
+    #Kinni panemine ja muu loogika asjandused
     for vajutus in pygame.event.get():
         if vajutus.type == pygame.QUIT:
             mäng_töötab = False
@@ -77,15 +88,37 @@ while mäng_töötab:
                         print("Õige!")
                         #lahe sfx
                         kababoom.play()
-                        tegelase_tegevus = "kõnnib"
+                        tegelase_tegevus = "näeb_salanumbrit"
                         mängija_sisestus = ""
                     else:
                         print("lollaka alert!")
                         mängija_sisestus = ""
             else:
                 mängija_sisestus += vajutus.unicode
-
-
+        #salanumbri vaatamine
+        elif tegelase_tegevus == "näeb_salanumbrit" and vajutus.type == pygame.KEYDOWN:
+            if vajutus.key == pygame.K_RETURN:
+                tegelase_tegevus = "kõnnib"
+        #uksekoodi vastamine
+        elif tegelase_tegevus == "uksekoodi_vastamine" and vajutus.type == pygame.KEYDOWN:
+            if vajutus.key == pygame.K_BACKSPACE:
+                mängija_sisestus = mängija_sisestus[:-1]
+            elif vajutus.key == pygame.K_RETURN:
+                if mängija_sisestus.strip().lower() == uksekood:
+                    print("Uks avatud!")
+                    kababoom.play()
+                    kababoom.play()
+                    kababoom.play()
+                    tegelase_tegevus = "kõnnib"
+                    mängija_sisestus = ""
+                    uks_kiht = tmxdata.get_layer_by_name("aari_uks")
+                    uks_kiht.visible = False
+                    uksekoodi_kohad = []
+                else:
+                    print("Vale uksekood!")
+                    mängija_sisestus = ""
+            else:
+                mängija_sisestus += vajutus.unicode
     #tegelase liikumine
     klahvid = pygame.key.get_pressed()
     muutus_x = 0
@@ -122,7 +155,11 @@ while mäng_töötab:
             praegune_küsimus = küsimused[id]
             print("alustame küsimisega!", id)
             tegelase_rect.y -= 1
-    
+    #uksekoodi trigger
+    for koht in uksekoodi_kohad:
+        if tegelase_rect.colliderect(koht):
+            tegelase_tegevus = "uksekoodi_vastamine"
+            tegelase_rect.y += 1
     #kaamera asukoht    
     kaamera_x = tegelase_rect.x - 300
     kaamera_y = tegelase_rect.y - 200
@@ -159,7 +196,20 @@ while mäng_töötab:
         ekraan.blit(küsimus_tekst, (25, 120))
         vastus_aken = font.render("Vastus: " + mängija_sisestus, True, (100, 255, 100))
         ekraan.blit(vastus_aken, (25, 160))
-    
+    #salanumbri aken   
+    elif tegelase_tegevus == "näeb_salanumbrit":
+        pygame.draw.rect(ekraan, (50, 50, 60), (100, 100, 400, 200))
+        salalanumber = praegune_küsimus["salanumber"]
+        salanumbri_aken = font.render(f"Salanumber: {salalanumber}", True, (255, 255, 0))
+        ekraan.blit(salanumbri_aken, (225, 150))
+    #uksekoodi aken
+    elif tegelase_tegevus == "uksekoodi_vastamine":
+        pygame.draw.rect(ekraan, (50, 50, 50), (0, 100, 800, 200))
+        uksekoodi_tekst = font.render("Sisesta uksekood:", True, (255, 255, 255))
+        ekraan.blit(uksekoodi_tekst, (25, 120))
+        uksekoodi_aken = font.render("Kood: " + mängija_sisestus, True, (100, 255, 100))
+        ekraan.blit(uksekoodi_aken, (25, 160))
+
     pygame.draw.rect(ekraan, (255, 0, 0), tegelase_joonistus_rect)
     pygame.display.flip()
     clock.tick(60)
