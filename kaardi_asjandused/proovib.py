@@ -54,7 +54,9 @@ küsimused = {
     "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente? (ei/jah)", "vastus": "ei", "salanumber": 7},
     "sissejuh_küssa": {"küsimus": "Kas Mirjamile meeldivad kassid(jah/ei)", "vastus": "jah", "salanumber": 67},
     "opsüs_küssa": {"küsimus": "Kas Terry Davis on maailma parima programmeerija (jah/ei)?", "vastus": "jah", "salanumber": 67},
-    "aar_küssa": {"küsimus": "Mis on 01000011 ASCII tabeli järgi?", "vastus": "67", "salanumber": 67
+    "AAR_küssa1": {"küsimus": "Mida tähendab protsessorite juures lühend NUMA ?", "vastus": "non-uniform memory access", "salanumber": 67},
+    "AAR_küssa2": {"küsimus": "Kirjuta lahti lühend GPU", "vastus": "Graphics Processing Unit", "salanumber": 67},
+    "AAR_küssa3": {"küsimus": "Mis on 01000011 ASCII tabeli järgi?", "vastus": "67", "salanumber": 67
                     },
 }
 
