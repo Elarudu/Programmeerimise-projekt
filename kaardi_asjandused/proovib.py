@@ -1,6 +1,17 @@
 import pygame
 import pytmx
 import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+def laadi_pilt(faili_nimi):
+    koht = os.path.join(script_dir, faili_nimi)
+    if os.path.exists(koht):
+        try:
+            img = pygame.image.load(koht)
+            return pygame.transform.scale(img, (tegelase_suurus, tegelase_suurus))
+        except Exception:
+            pass
+    return pygame.Surface((tegelase_suurus, tegelase_suurus))
+
 
 pygame.init()
 pygame.mixer.init()
@@ -14,12 +25,26 @@ bgm.play(-1)
 #sfx
 kababoom = pygame.mixer.Sound('kaboom.mp3')
 
-#tegelase värk
-tegelase_kiirus = 30
-tegelase_rect = pygame.Rect(100, 500, 50, 50)
+#Hitboxi muutujad
+Hitbox_laius = 43
+Hitbox_kõrgus = 74
 
+
+#tegelase värk
+tegelase_suurus = 100
+tegelane_seisab = laadi_pilt("tegelane_seisab.png")
+tegelane_konnib1 = laadi_pilt("tegelane_konnib(1).png")
+tegelane_konnib2 = laadi_pilt("tegelane_konnib(2).png")
+tegelane_surnud = laadi_pilt("tegelane_surnud.png")
+tegelane_x, tegelane_y = 300, 1200
+mängija_rect = pygame.Rect(tegelane_x, tegelane_y, Hitbox_laius, Hitbox_kõrgus)
+tavaline = tegelane_seisab
+animatsiooni_framed = 0
+animatsiooni_kounter = 0
+tegelase_kiirus = 30
 #mängu_režiim
 tegelase_tegevus = "kõnnib"
+kui_kõnnib = False
 
 #sõnastik küsimustele
 küsimused = {
@@ -119,6 +144,7 @@ while mäng_töötab:
                     mängija_sisestus = ""
             else:
                 mängija_sisestus += vajutus.unicode
+
     #tegelase liikumine
     klahvid = pygame.key.get_pressed()
     muutus_x = 0
@@ -128,41 +154,52 @@ while mäng_töötab:
         if klahvid[pygame.K_RIGHT]: muutus_x = tegelase_kiirus
         if klahvid[pygame.K_UP]: muutus_y = -tegelase_kiirus
         if klahvid[pygame.K_DOWN]: muutus_y = tegelase_kiirus
+    kui_kõnnib = muutus_x != 0 or muutus_y != 0
+    #Animatsioon
+    if kui_kõnnib:
+        animatsiooni_framed += 1
+        if animatsiooni_framed >= 5:
+            animatsiooni_framed = 0
+            animatsiooni_kounter = (animatsiooni_kounter + 1) % 2
+            tavaline = tegelane_konnib1 if animatsiooni_kounter == 0 else tegelane_konnib2
+    else:
+        tavaline = tegelane_seisab
 
     #tegelase liikumine vol.2 (vasak, parem)
-    tegelase_rect.x += muutus_x
+    mängija_rect.x += muutus_x
     for sein in seinad:
         #kas tegelase rect puutub seina rect
-        if tegelase_rect.colliderect(sein):
+        if mängija_rect.colliderect(sein):
             if muutus_x > 0:  # liikudes paremalt seina vastu
-                tegelase_rect.right = sein.left  # muudad tegelase parema külje sama asukohaks nagu seina vasak külg
+                mängija_rect.right = sein.left  # muudad tegelase parema külje sama asukohaks nagu seina vasak külg
             if muutus_x < 0:  # liikudes vasakult seina vastu
-                tegelase_rect.left = sein.right  #muudad tegelase vasaku külje sama asukohaks nagu seina parem külg
+                mängija_rect.left = sein.right  #muudad tegelase vasaku külje sama asukohaks nagu seina parem külg
     #tegelase liikumine vol.2 jätkub (üles, alla)
-    tegelase_rect.y += muutus_y
+    mängija_rect.y += muutus_y
     for sein in seinad:
         #kas tegelase rect puutub seina rect
-        if tegelase_rect.colliderect(sein):
+        if mängija_rect.colliderect(sein):
             if muutus_y > 0:  # liikudes alt seina vastu
-                tegelase_rect.bottom = sein.top  # muudad tegelase alumise külje sama asukohaks nagu seina ülemine külg
+                mängija_rect.bottom = sein.top  # muudad tegelase alumise külje sama asukohaks nagu seina ülemine külg
             if muutus_y < 0:  # liikudes ülevalt seina vastu
-                tegelase_rect.top = sein.bottom  #muudad tegelase ülemise külje sama asukohaks nagu seina alumine külg
+                mängija_rect.top = sein.bottom  #muudad tegelase ülemise külje sama asukohaks nagu seina alumine külg
     
     #küsimuse trigger
     for ala, id in küsimuste_kohad:
-        if tegelase_rect.colliderect(ala):
+        if mängija_rect.colliderect(ala):
             tegelase_tegevus = "vastab_küssale"
             praegune_küsimus = küsimused[id]
             print("alustame küsimisega!", id)
-            tegelase_rect.y -= 1
+            mängija_rect.y -= 1
     #uksekoodi trigger
     for koht in uksekoodi_kohad:
-        if tegelase_rect.colliderect(koht):
+        if mängija_rect.colliderect(koht):
             tegelase_tegevus = "uksekoodi_vastamine"
-            tegelase_rect.y += 1
+            mängija_rect.y += 1
+
     #kaamera asukoht    
-    kaamera_x = tegelase_rect.x - 300
-    kaamera_y = tegelase_rect.y - 200
+    kaamera_x = mängija_rect.x - 300
+    kaamera_y = mängija_rect.y - 200
 
     #joonistame ekraanile backgroundi
     ekraan.fill((0, 0, 0))
@@ -181,13 +218,7 @@ while mäng_töötab:
                     ekraan_x = x * tmxdata.tilewidth - kaamera_x
                     ekraan_y = y * tmxdata.tileheight - kaamera_y
                     ekraan.blit(ruut, (ekraan_x, ekraan_y))
-    #tegelase joonistamine
-    tegelase_joonistus_rect = pygame.Rect(
-        tegelase_rect.x - kaamera_x,
-        tegelase_rect.y - kaamera_y,
-        tegelase_rect.width,
-        tegelase_rect.height
-    )
+
     #joonistame kasti küssale
     if tegelase_tegevus == "vastab_küssale":
         #küsimuse aken
@@ -209,8 +240,9 @@ while mäng_töötab:
         ekraan.blit(uksekoodi_tekst, (25, 120))
         uksekoodi_aken = font.render("Kood: " + mängija_sisestus, True, (100, 255, 100))
         ekraan.blit(uksekoodi_aken, (25, 160))
-
-    pygame.draw.rect(ekraan, (255, 0, 0), tegelase_joonistus_rect)
+    #joonistame mängija    
+    pygame.draw.rect(ekraan, (255, 0, 0), mängija_rect)
+    ekraan.blit(tavaline, (300, 200))
     pygame.display.flip()
     clock.tick(60)
 pygame.quit()
