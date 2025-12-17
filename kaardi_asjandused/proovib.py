@@ -95,15 +95,17 @@ for kiht in tmxdata.visible_layers:
                 if omadused.get("uksekood"):
                     uksekoodi_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
                     uksekoodi_kohad.append(uksekoodi_koht)
+
+#söökla asukoha leidmine
 söökla_koht = []
 for kiht in tmxdata.visible_layers:
     if isinstance(kiht, pytmx.TiledTileLayer):
         for x, y, gid in kiht:
             omadused = tmxdata.get_tile_properties_by_gid(gid)
             if omadused:
-                if omadused.get("söökla"):
-                    küssa_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
-                    küsimuste_kohad.append((küssa_koht, omadused["söökla"]))
+                if omadused.get("söök"):
+                    söögi_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
+                    söökla_koht.append(söögi_koht)
 
 font = pygame.font.Font(None, 32)
 praegune_küsimus = None
@@ -121,27 +123,32 @@ while mäng_töötab:
         elif tegelase_tegevus == "vastab_küssale" and vajutus.type == pygame.KEYDOWN:
             if vajutus.key == pygame.K_BACKSPACE:
                 mängija_sisestus = mängija_sisestus[:-1]
+            elif vajutus.key == pygame.K_RETURN:
+                if mängija_sisestus.strip().lower() == praegune_küsimus["vastus"].lower():
+                    print("Õige!")
+                    #lahe sfx
+                    kababoom.play()
+                    tegelase_tegevus = "näeb_salanumbrit"
+                    mängija_sisestus = ""
+                    mündid += 1
+                else:
+                    elud -= 1
+            else:
+                mängija_sisestus += vajutus.unicode
         elif tegelase_tegevus == "ostab_munchi" and vajutus.type == pygame.KEYDOWN:
             if vajutus.key == pygame.K_BACKSPACE:
                 mängija_sisestus = mängija_sisestus[:-1]
             elif vajutus.key == pygame.K_RETURN:
-                    if söökla_küsimus.strip().lower() == "osta":
-                        if mündid >= 3:
+                    if mängija_sisestus.strip().lower() == "osta":
+                        if mündid >= 2:
                             print("Ostetud!")
                             kababoom.play()
-                            mündid -= 3
+                            mündid -= 2
                             elud += 1
                         else:
                             print("Pole piisavalt münte!")
-                    if mängija_sisestus.strip().lower() == praegune_küsimus["vastus"].lower():
-                        print("Õige!")
-                        #lahe sfx
-                        kababoom.play()
-                        tegelase_tegevus = "näeb_salanumbrit"
-                        mängija_sisestus = ""
-                        mündid += 1
-                    else:
-                        elud -= 1
+                            tegelase_tegevus = "kõnnib"
+                            mängija_sisestus = "" 
             else:
                 mängija_sisestus += vajutus.unicode
         #salanumbri vaatamine
@@ -221,9 +228,9 @@ while mäng_töötab:
             tegelase_tegevus = "uksekoodi_vastamine"
             mängija_rect.y += 1
     #Söökla trigger
-    for maa in söökla_koht:
-        if mängija_rect.colliderect(maa):
-            tegelase_tegevus = "Ostab munchi"
+    for söögi_nämnäm in söökla_koht:
+        if mängija_rect.colliderect(söögi_nämnäm):
+            tegelase_tegevus = "ostab_munchi"
             mängija_rect.y += 1
 
     #kaamera asukoht    
@@ -274,7 +281,7 @@ while mäng_töötab:
         pygame.draw.rect(ekraan, (50, 50, 50), (0, 100, 800, 200))
         söökla_tekst = font.render("Tere tulemast sööklasse! Lõuna maksab 2 münti.", True, (255, 255, 255))
         ekraan.blit(söökla_tekst, (25, 120))
-        munchi_aken = font.render("Sisesta 'osta' et osta lõuna.", + mängija_sisestus, True, (100, 255, 100))
+        munchi_aken = font.render(f"Sisesta 'osta' et saada lõuna: " + mängija_sisestus, True, (100, 255, 100))
         ekraan.blit(munchi_aken, (25, 160))
 
     #surma joonistus
@@ -289,7 +296,7 @@ while mäng_töötab:
     #müntide joonistus
     müntide_kogus = font.render(f"Mündid: {mündid}", True, (0, 0, 0))
     ekraan.blit(müntide_kogus, (538, 30))
-    
+
     pygame.draw.rect(ekraan, (255, 0, 0), mängija_rect)
     ekraan.blit(tavaline, (300, 200))
     pygame.display.flip()
