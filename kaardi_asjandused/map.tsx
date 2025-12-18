@@ -2,6 +2,9 @@
 <tileset version="1.10" tiledversion="1.11.2" name="map" tilewidth="96" tileheight="96" tilecount="6" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="9">
+  <properties>
+   <property name="quiz_id" value="freebie"/>
+  </properties>
   <image source="TILE1.png" width="96" height="96"/>
  </tile>
  <tile id="13">
