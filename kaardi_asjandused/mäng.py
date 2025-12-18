@@ -227,7 +227,7 @@ while mäng_töötab:
                     uksekoodi_kohad = []
                 else:
                     print("Vale uksekood!")
-                    tegelase_tegevus = "vale_vastus"
+                    tegelase_tegevus = "kõnnib"
                     mängija_sisestus = ""
             else:
                 mängija_sisestus += vajutus.unicode
@@ -239,7 +239,6 @@ while mäng_töötab:
                 if mängija_sisestus.strip().lower() == "b":
                     tegelase_tegevus = "võit"
                 else:
-                    tegelase_tegevus = "vale_vastus"
                     elud -= 1
                     mängija_sisestus = ""
             else:
