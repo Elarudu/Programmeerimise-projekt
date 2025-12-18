@@ -28,6 +28,9 @@ bgm = pygame.mixer.Sound('medieval_muss.mp3')
 bgm.play(-1)
 #sfx
 kababoom = pygame.mixer.Sound('kaboom.mp3')
+võit = pygame.mixer.Sound('võidu_heli.mp3')
+#boss muss
+boss_muss = pygame.mixer.Sound('bossi_muss.mp3')
 
 #Hitboxi muutujad
 Hitbox_laius = 43
@@ -71,7 +74,7 @@ mängija_rect = pygame.Rect(
 tavaline = tegelane_seisab
 animatsiooni_framed = 0
 animatsiooni_kounter = 0
-tegelase_kiirus = 30
+tegelase_kiirus = 14
 #mängu_režiim
 tegelase_tegevus = "kõnnib"
 kui_kõnnib = False
@@ -81,7 +84,8 @@ küsimused = {
     "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente? (ei/jah)", "vastus": "ei", "salanumber": 500},
     "sissejuh_küssa": {"küsimus": "Kas Mirjamile meeldivad kassid(jah/ei)", "vastus": "jah", "salanumber": 100},
     "opsüs_küssa": {"küsimus": "Kas Terry Davis on proge kunn (jah/ei)?", "vastus": "jah", "salanumber": 67},
-    "tasuta_küssa": {"küsimus": "Mis majas me praegu oleme?", "vastus": "Delta", "salanumber": 0},
+    "freebie": {"küsimus": "Kas me viibime delta majas? (jah/ei)?", "vastus": "jah", "salanumber": 0},
+
                     }
 
 vastatud_küsimused = []
@@ -239,6 +243,7 @@ while mäng_töötab:
             elif vajutus.key == pygame.K_RETURN:
                 if mängija_sisestus.strip().lower() == "b":
                     tegelase_tegevus = "võit"
+                    võit.play()
                 else:
                     elud -= 1
                     mängija_sisestus = ""
@@ -304,12 +309,15 @@ while mäng_töötab:
         if mängija_rect.colliderect(söögi_nämnäm):
             if munch_ostetud != True and tegelase_tegevus == "kõnnib":
                 tegelase_tegevus = "ostab_munchi"
-                mängija_rect.y += 100
+                mängija_rect.x -= 50
     #bossi trigger
     for boss in boss_koht:
         if mängija_rect.colliderect(boss):
+            bgm.stop()
             if tegelase_tegevus == "kõnnib":
                 tegelase_tegevus = "lõpuraund"
+                boss_muss.play()
+
 
     #kaamera asukoht    
     kaamera_x = mängija_rect.x - laius // 2 + Hitbox_laius // 2
@@ -381,6 +389,7 @@ while mäng_töötab:
         ekraan.blit(aar_pilt, (170, 270))
     #võidu aken
     elif tegelase_tegevus == "võit":
+        boss_muss.stop()
         pygame.draw.rect(ekraan, (44, 142, 44), (0, 0, 640, 480))
         võidu_tekst = font.render("Palju õnne! Sa võitsid mängu!", True, (255, 255, 255))
         ekraan.blit(võidu_tekst, (170, 70))
