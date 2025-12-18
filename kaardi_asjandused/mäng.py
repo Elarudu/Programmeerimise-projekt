@@ -49,8 +49,8 @@ for layer in tmxdata.visible_layers:
         if spawn_koht:
             break
 if spawn_koht is not None:
-    spawn_x = spawn_koht[0] * tmxdata.tilewidth
-    spawn_y = spawn_koht[1] * tmxdata.tileheight
+    spawn_x = spawn_koht[0] * tmxdata.tilewidth - 24
+    spawn_y = spawn_koht[1] * tmxdata.tileheight - 55
 else:
     spawn_x, spawn_y = 0, 0  # fallback
 #tegelase värk + lõpu pilt
