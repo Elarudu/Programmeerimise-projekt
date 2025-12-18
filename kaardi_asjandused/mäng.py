@@ -372,9 +372,13 @@ while mäng_töötab:
         ekraan.blit(lõpu_tekst, (100, 70))
         ülesanne_tekst_1 = (font.render(f"Milline joonisel kujutatud dekoodri väljunditest on aktiivne (1)", True, (255, 255, 255)))
         ekraan.blit(ülesanne_tekst_1, (25, 120))
-        ülesanne_tekst_2 = (font.render(f", kui sisendis x1 on väärtus 0 ja sisendis x2 on väärtus 1...  " + mängija_sisestus, True, (255, 255, 255)))
+        ülesanne_tekst_2 = (font.render(f", kui sisendis x1 on väärtus 0 ja sisendis x2 on väärtus 1...  ", True, (255, 255, 255)))
         ekraan.blit(ülesanne_tekst_2, (25, 160))
-        ekraan.blit(aar_pilt, (220, 200))
+        ülesanne_tekst_3 = (font.render(f"Vastus: a, b, c , d", True, (255, 255, 255)))
+        ekraan.blit(ülesanne_tekst_3, (25, 200))
+        mängija_tekst = font.render("Sisestus: " + mängija_sisestus, True, (255, 255, 0))
+        ekraan.blit(mängija_tekst, (25, 240))
+        ekraan.blit(aar_pilt, (170, 270))
     #võidu aken
     elif tegelase_tegevus == "võit":
         pygame.draw.rect(ekraan, (44, 142, 44), (0, 0, 640, 480))
