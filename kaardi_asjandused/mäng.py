@@ -53,12 +53,14 @@ if spawn_koht is not None:
     spawn_y = spawn_koht[1] * tmxdata.tileheight
 else:
     spawn_x, spawn_y = 0, 0  # fallback
-#tegelase värk
+#tegelase värk + lõpu pilt
 tegelase_suurus = 100
 tegelane_seisab = laadi_pilt("tegelane_seisab.png")
 tegelane_konnib1 = laadi_pilt("tegelane_konnib(1).png")
 tegelane_konnib2 = laadi_pilt("tegelane_konnib(2).png")
 tegelane_surnud = laadi_pilt("tegelane_surnud.png")
+aar_pilt = laadi_pilt("aar_haige_küsimus.png")
+aar_pilt = pygame.transform.smoothscale(aar_pilt, (300, 200))
 mängija_rect = pygame.Rect(
     spawn_x,
     spawn_y,
@@ -140,6 +142,7 @@ for kiht in tmxdata.visible_layers:
                 if omadused.get("aari_ava"):
                     bossi_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
                     boss_koht.append(bossi_koht)
+
 font = pygame.font.Font(None, 32)
 praegune_küsimus = None
 söökla_küsimus = None
@@ -224,6 +227,7 @@ while mäng_töötab:
                     uksekoodi_kohad = []
                 else:
                     print("Vale uksekood!")
+                    tegelase_tegevus = "vale_vastus"
                     mängija_sisestus = ""
             else:
                 mängija_sisestus += vajutus.unicode
@@ -232,7 +236,7 @@ while mäng_töötab:
             if vajutus.key == pygame.K_BACKSPACE:
                 mängija_sisestus = mängija_sisestus[:-1]
             elif vajutus.key == pygame.K_RETURN:
-                if mängija_sisetus.strip().lower() == "b":
+                if mängija_sisestus.strip().lower() == "b":
                     tegelase_tegevus = "võit"
                 else:
                     tegelase_tegevus = "vale_vastus"
@@ -300,7 +304,7 @@ while mäng_töötab:
         if mängija_rect.colliderect(söögi_nämnäm):
             if munch_ostetud != True and tegelase_tegevus == "kõnnib":
                 tegelase_tegevus = "ostab_munchi"
-                mängija_rect.y += 10
+                mängija_rect.y += 100
     #bossi trigger
     for boss in boss_koht:
         if mängija_rect.colliderect(boss):
@@ -361,8 +365,6 @@ while mäng_töötab:
         ekraan.blit(söökla_tekst, (25, 120))
         munchi_aken = font.render(f"Sisesta 'osta' et saada lõuna: " + mängija_sisestus, True, (100, 255, 100))
         ekraan.blit(munchi_aken, (25, 160))
-    if tegelase_tegevus != "surnud" and tegelase_tegevus != "kõnnib":
-        tavaline = None
     #lõpuraundi aken
     elif tegelase_tegevus == "lõpuraund":
         pygame.draw.rect(ekraan, (142, 44, 44), (0, 0, 640, 480))
@@ -370,14 +372,17 @@ while mäng_töötab:
         ekraan.blit(lõpu_tekst, (100, 70))
         ülesanne_tekst_1 = (font.render(f"Milline joonisel kujutatud dekoodri väljunditest on aktiivne (1)", True, (255, 255, 255)))
         ekraan.blit(ülesanne_tekst_1, (25, 120))
-        ülesanne_tekst_2 = (font.render(f", kui sisendis x1 on väärtus 0 ja sisendis x2 on väärtus 1...  ") + mängija_sisestus, True, (255, 255, 255))
+        ülesanne_tekst_2 = (font.render(f", kui sisendis x1 on väärtus 0 ja sisendis x2 on väärtus 1...  " + mängija_sisestus, True, (255, 255, 255)))
         ekraan.blit(ülesanne_tekst_2, (25, 160))
+        ekraan.blit(aar_pilt, (220, 200))
     #võidu aken
     elif tegelase_tegevus == "võit":
         pygame.draw.rect(ekraan, (44, 142, 44), (0, 0, 640, 480))
         võidu_tekst = font.render("Palju õnne! Sa võitsid mängu!", True, (255, 255, 255))
         ekraan.blit(võidu_tekst, (170, 70))
     
+    if tegelase_tegevus != "surnud" and tegelase_tegevus != "kõnnib":
+        tavaline = None
     #surma joonistus"
     if elud == 0:
         tegelase_tegevus = "surnud"
