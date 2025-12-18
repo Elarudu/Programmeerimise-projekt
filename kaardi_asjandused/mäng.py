@@ -81,6 +81,8 @@ küsimused = {
     "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente? (ei/jah)", "vastus": "ei", "salanumber": 500},
     "sissejuh_küssa": {"küsimus": "Kas Mirjamile meeldivad kassid(jah/ei)", "vastus": "jah", "salanumber": 100},
     "opsüs_küssa": {"küsimus": "Kas Terry Davis on proge kunn (jah/ei)?", "vastus": "jah", "salanumber": 67},
+    "Proge_küssa": {"küsimus": "Kas me viibime delta majas? (jah/ei)?", "vastus": "jah", "salanumber": 0},
+
                     }
 
 vastatud_küsimused = []
