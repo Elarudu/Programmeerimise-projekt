@@ -16,14 +16,76 @@ def laadi_pilt(faili_nimi):
 pygame.init()
 pygame.mixer.init()
 #ekraani värk
-laius = 1920
-kõrgus = 1080
-ekraan = pygame.display.set_mode((laius, kõrgus))
+laius = 640
+kõrgus = 480
+ekraan = pygame.display.set_mode((laius, kõrgus), pygame.SCALED | pygame.RESIZABLE) #Laseb fullscreenile panna ja skaleerib 640x480 fullscreeniks, et pixled ei läheks nihkesse.
+#laeme kaardi faili
+script_dir = os.path.dirname(os.path.abspath(__file__))
+map_path = os.path.join(script_dir, "level.tmx")
+tmxdata = pytmx.load_pygame(map_path)
 #taustamuss
 bgm = pygame.mixer.Sound('medieval_muss.mp3')
 bgm.play(-1)
 #sfx
 kababoom = pygame.mixer.Sound('kaboom.mp3')
+
+#Hitboxi muutujad
+Hitbox_laius = 43
+Hitbox_kõrgus = 74
+
+#Mündi koguja
+mündid = 0
+elud = 3
+#spawn koht
+spawn_koht = None
+
+for layer in tmxdata.visible_layers:
+    if isinstance(layer, pytmx.TiledTileLayer):
+        for x, y, gid in layer:
+            props = tmxdata.get_tile_properties_by_gid(gid)
+            if props and props.get("spawn") is True:
+                spawn_koht = (x, y)
+                break
+        if spawn_koht:
+            break
+if spawn_koht is not None:
+    spawn_x = spawn_koht[0] * tmxdata.tilewidth
+    spawn_y = spawn_koht[1] * tmxdata.tileheight
+else:
+    spawn_x, spawn_y = 0, 0  # fallback
+#tegelase värk
+tegelase_suurus = 100
+tegelane_seisab = laadi_pilt("tegelane_seisab.png")
+tegelane_konnib1 = laadi_pilt("tegelane_konnib(1).png")
+tegelane_konnib2 = laadi_pilt("tegelane_konnib(2).png")
+tegelane_surnud = laadi_pilt("tegelane_surnud.png")
+mängija_rect = pygame.Rect(
+    spawn_x,
+    spawn_y,
+    Hitbox_laius,
+    Hitbox_kõrgus
+)
+
+tavaline = tegelane_seisab
+animatsiooni_framed = 0
+animatsiooni_kounter = 0
+tegelase_kiirus = 30
+#mängu_režiim
+tegelase_tegevus = "kõnnib"
+kui_kõnnib = False
+#sõnastik küsimustele
+küsimused = {
+    "mata_küssa": {"küsimus": "Kas nullmaatriksi pöördmaatriks on nullmaatriks (ei/jah)?", "vastus": "jah", "salanumber": 1000},
+    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente? (ei/jah)", "vastus": "ei", "salanumber": 500},
+    "sissejuh_küssa": {"küsimus": "Kas Mirjamile meeldivad kassid(jah/ei)", "vastus": "jah", "salanumber": 100},
+    "opsüs_küssa": {"küsimus": "Kas Terry Davis on proge kunn (jah/ei)?", "vastus": "jah", "salanumber": 67},
+                    }
+
+vastatud_küsimused = []
+munch_ostetud = False
+
+#tick kiirus
+clock = pygame.time.Clock()
 
 #seinad
 seinad = []
@@ -35,56 +97,7 @@ for kiht in tmxdata.visible_layers:
                 if omadused.get("solid"):
                     sein = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
                     seinad.append(sein)
-                if omadused.get("spawnimis_koht"):
-                    spawn = (x * tmxdata.tilewidth, y * tmxdata.tileheight)
 print(len(seinad), "seina ruutu leitud.")
-
-#Hitboxi muutujad
-Hitbox_laius = 43
-Hitbox_kõrgus = 74
-
-#Mündi koguja
-mündid = 0
-elud = 3
-
-#tegelase värk
-tegelase_suurus = 100
-tegelane_seisab = laadi_pilt("tegelane_seisab.png")
-tegelane_konnib1 = laadi_pilt("tegelane_konnib(1).png")
-tegelane_konnib2 = laadi_pilt("tegelane_konnib(2).png")
-tegelane_surnud = laadi_pilt("tegelane_surnud.png")
-tegelane_x, tegelane_y = spawn
-mängija_rect = pygame.Rect(tegelane_x, tegelane_y, Hitbox_laius, Hitbox_kõrgus)
-tavaline = tegelane_seisab
-animatsiooni_framed = 0
-animatsiooni_kounter = 0
-tegelase_kiirus = 30
-#mängu_režiim
-tegelase_tegevus = "kõnnib"
-kui_kõnnib = False
-#sõnastik küsimustele
-küsimused = {
-    "mata_küssa": {"küsimus": "Kas nullmaatriksi pöördmaatriks on nullmaatriks (ei/jah)?", "vastus": "jah", "salanumber": 67},
-    "proge_küssa": {"küsimus": "Kas ennikuse saab lisada elemente? (ei/jah)", "vastus": "ei", "salanumber": 7},
-    "sissejuh_küssa": {"küsimus": "Kas Mirjamile meeldivad kassid(jah/ei)", "vastus": "jah", "salanumber": 67},
-    "opsüs_küssa": {"küsimus": "Kas Terry Davis on maailma parima programmeerija (jah/ei)?", "vastus": "jah", "salanumber": 67},
-    "AAR_küssa1": {"küsimus": "Mida tähendab protsessorite juures lühend NUMA ?", "vastus": "non-uniform memory access", "salanumber": 67},
-    "AAR_küssa2": {"küsimus": "Kirjuta lahti lühend GPU", "vastus": "Graphics Processing Unit", "salanumber": 67},
-    "AAR_küssa3": {"küsimus": "Mis on 01000011 ASCII tabeli järgi?", "vastus": "67", "salanumber": 67
-                    },
-}
-
-vastatud_küsimused = []
-munch_ostetud = False
-
-#tick kiirus
-clock = pygame.time.Clock()
-
-#laeme kaardi faili
-script_dir = os.path.dirname(os.path.abspath(__file__))
-map_path = os.path.join(script_dir, "level.tmx")
-tmxdata = pytmx.load_pygame(map_path)
-
 
 #küssa kohade leidmine
 küsimuste_kohad = []
@@ -117,12 +130,21 @@ for kiht in tmxdata.visible_layers:
                 if omadused.get("söök"):
                     söögi_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
                     söökla_koht.append(söögi_koht)
-
+# final boss leidmine
+boss_koht = []
+for kiht in tmxdata.visible_layers:
+    if isinstance(kiht, pytmx.TiledTileLayer):
+        for x, y, gid in kiht:
+            omadused = tmxdata.get_tile_properties_by_gid(gid)
+            if omadused:
+                if omadused.get("aari_ava"):
+                    bossi_koht = pygame.Rect(x * tmxdata.tilewidth, y * tmxdata.tileheight, tmxdata.tilewidth, tmxdata.tileheight)
+                    boss_koht.append(bossi_koht)
 font = pygame.font.Font(None, 32)
 praegune_küsimus = None
 söökla_küsimus = None
 mängija_sisestus = ""
-uksekood = "67"
+uksekood = "1667"
                     
 mäng_töötab = True
 
@@ -182,6 +204,9 @@ while mäng_töötab:
         elif tegelase_tegevus == "näeb_salanumbrit" and vajutus.type == pygame.KEYDOWN:
             if vajutus.key == pygame.K_RETURN:
                 tegelase_tegevus = "kõnnib"
+        elif tegelase_tegevus == "võit" and vajutus.type == pygame.KEYDOWN:
+            if vajutus.key == pygame.K_RETURN:
+                mäng_töötab = False
         #uksekoodi vastamine
         elif tegelase_tegevus == "uksekoodi_vastamine" and vajutus.type == pygame.KEYDOWN:
             if vajutus.key == pygame.K_BACKSPACE:
@@ -202,6 +227,20 @@ while mäng_töötab:
                     mängija_sisestus = ""
             else:
                 mängija_sisestus += vajutus.unicode
+        #lõpuraundi vastamine
+        elif tegelase_tegevus == "lõpuraund" and vajutus.type == pygame.KEYDOWN:
+            if vajutus.key == pygame.K_BACKSPACE:
+                mängija_sisestus = mängija_sisestus[:-1]
+            elif vajutus.key == pygame.K_RETURN:
+                if mängija_sisetus.strip().lower() == "b":
+                    tegelase_tegevus = "võit"
+                else:
+                    tegelase_tegevus = "vale_vastus"
+                    elud -= 1
+                    mängija_sisestus = ""
+            else:
+                mängija_sisestus += vajutus.unicode
+
 
     #tegelase liikumine
     klahvid = pygame.key.get_pressed()
@@ -245,7 +284,7 @@ while mäng_töötab:
     #küsimuse trigger
     for ala, id in küsimuste_kohad:
         if mängija_rect.colliderect(ala):
-            if id not in vastatud_küsimused:
+            if tegelase_tegevus == "kõnnib" and id not in vastatud_küsimused:
                 tegelase_tegevus = "vastab_küssale"
                 praegune_küsimus = küsimused[id]
                 print("alustame küsimisega!", id)
@@ -253,20 +292,24 @@ while mäng_töötab:
                 vastatud_küsimused.append(id)
     #uksekoodi trigger
     for koht in uksekoodi_kohad:
-        if mängija_rect.colliderect(koht):
+        if mängija_rect.colliderect(koht) and tegelase_tegevus == "kõnnib":
             tegelase_tegevus = "uksekoodi_vastamine"
             mängija_rect.y += 10
     #söökla trigger
     for söögi_nämnäm in söökla_koht:
         if mängija_rect.colliderect(söögi_nämnäm):
-            if munch_ostetud != True:
+            if munch_ostetud != True and tegelase_tegevus == "kõnnib":
                 tegelase_tegevus = "ostab_munchi"
                 mängija_rect.y += 10
+    #bossi trigger
+    for boss in boss_koht:
+        if mängija_rect.colliderect(boss):
+            if tegelase_tegevus == "kõnnib":
+                tegelase_tegevus = "lõpuraund"
 
     #kaamera asukoht    
-    kaamera_x = mängija_rect.x - 300
-    kaamera_y = mängija_rect.y - 200
-
+    kaamera_x = mängija_rect.x - laius // 2 + Hitbox_laius // 2
+    kaamera_y = mängija_rect.y - kõrgus // 2 + Hitbox_kõrgus // 2
     #joonistame ekraanile backgroundi
     ekraan.fill((0, 0, 0))
 
@@ -307,7 +350,7 @@ while mäng_töötab:
     #uksekoodi aken
     elif tegelase_tegevus == "uksekoodi_vastamine":
         pygame.draw.rect(ekraan, (50, 50, 50), (0, 100, 800, 200))
-        uksekoodi_tekst = font.render("Sisesta uksekood:", True, (255, 255, 255))
+        uksekoodi_tekst = font.render("Sisesta uksekood: (liida salakoodid kokku)", True, (255, 255, 255))
         ekraan.blit(uksekoodi_tekst, (25, 120))
         uksekoodi_aken = font.render("Kood: " + mängija_sisestus, True, (100, 255, 100))
         ekraan.blit(uksekoodi_aken, (25, 160))
@@ -320,21 +363,38 @@ while mäng_töötab:
         ekraan.blit(munchi_aken, (25, 160))
     if tegelase_tegevus != "surnud" and tegelase_tegevus != "kõnnib":
         tavaline = None
-    #surma joonistus
+    #lõpuraundi aken
+    elif tegelase_tegevus == "lõpuraund":
+        pygame.draw.rect(ekraan, (142, 44, 44), (0, 0, 640, 480))
+        lõpu_tekst = font.render("Tere tulemast lõppu!!! Lahenda ülesanne, et võita!", True, (255, 255, 255))
+        ekraan.blit(lõpu_tekst, (100, 70))
+        ülesanne_tekst_1 = (font.render(f"Milline joonisel kujutatud dekoodri väljunditest on aktiivne (1)", True, (255, 255, 255)))
+        ekraan.blit(ülesanne_tekst_1, (25, 120))
+        ülesanne_tekst_2 = (font.render(f", kui sisendis x1 on väärtus 0 ja sisendis x2 on väärtus 1...  ") + mängija_sisestus, True, (255, 255, 255))
+        ekraan.blit(ülesanne_tekst_2, (25, 160))
+    #võidu aken
+    elif tegelase_tegevus == "võit":
+        pygame.draw.rect(ekraan, (44, 142, 44), (0, 0, 640, 480))
+        võidu_tekst = font.render("Palju õnne! Sa võitsid mängu!", True, (255, 255, 255))
+        ekraan.blit(võidu_tekst, (170, 70))
+    
+    #surma joonistus"
     if elud == 0:
         tegelase_tegevus = "surnud"
         tavaline = tegelane_surnud
-        tekst = font.render("Kukkusid delta majamängu läbi!", True, (0, 0, 0))
-        ekraan.blit(tekst, (200, 70))
+        tekst = font.render("Kukkusid delta majamängu läbi!", True, (255, 0, 0))
+        ekraan.blit(tekst, (170, 70))
     #elude joonistus
-    elude_kogus = font.render(f"Elud: {elud}", True, (0, 0, 0))
+    elude_kogus = font.render(f"Elud: {elud}", True, (255, 0, 255))
     ekraan.blit(elude_kogus, (564, 0))
     #müntide joonistus
-    müntide_kogus = font.render(f"Mündid: {mündid}", True, (0, 0, 0))
+    müntide_kogus = font.render(f"Mündid: {mündid}", True, (255, 105, 55))
     ekraan.blit(müntide_kogus, (538, 30))
     #joonistame mängija
     if tavaline != None:
-        ekraan.blit(tavaline, (300, 200))
+        ekraan_x = mängija_rect.x - kaamera_x
+        ekraan_y = mängija_rect.y - kaamera_y
+        ekraan.blit(tavaline, (ekraan_x, ekraan_y))
 
     pygame.display.flip()
     clock.tick(60)

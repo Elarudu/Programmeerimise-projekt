@@ -30,7 +30,7 @@
  </tile>
  <tile id="17">
   <properties>
-   <property name="spawnimis_koht" type="bool" value="true"/>
+   <property name="spawn" type="bool" value="true"/>
   </properties>
   <image source="spawn.png" width="48" height="48"/>
  </tile>
