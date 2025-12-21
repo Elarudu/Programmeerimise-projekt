@@ -1,8 +1,13 @@
+#Projekti teemaks on delta majamäng, kus mängija saab lahendada erinevaid ülesandeid.
+#Autoriteks on Mio Cristopher Vahtra ja Elar Udumets.
+#Eeskujuna kasutatud allikad on StackOverFlow, Tiles-i juhendid, pygame-i enda koduleht.
+#Programmi käivitamiseks on vaja teha pip install pygame, pip install pytmx ja siis python mäng.py, et mäng avaneks.
 import pygame
 import pytmx
 import os
 script_dir = os.path.dirname(os.path.abspath(__file__))
 def laadi_pilt(faili_nimi):
+    """Koostab tee pildifailini ja laadib pildi, skaleerides selle tegelase suuruseks, kui ei õnnestu, tagastab tühja pinna."""
     koht = os.path.join(script_dir, faili_nimi)
     if os.path.exists(koht):
         try:
